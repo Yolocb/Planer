@@ -307,8 +307,8 @@
 			type="button"
 			onclick={openAddEvent}
 			aria-label="Termin hinzufügen"
-			class="fixed bottom-20 right-4 z-20 grid size-14 place-items-center rounded-full text-3xl text-white shadow-lg transition-transform active:scale-95"
-			style="background-color: var(--color-accent)"
+			class="fixed bottom-20 right-4 z-20 grid size-14 place-items-center rounded-full text-3xl text-white transition-transform active:scale-95"
+			style="background-color: var(--color-accent); background-image: var(--accent-gradient); box-shadow: 0 10px 24px -6px color-mix(in srgb, var(--color-accent) 70%, transparent)"
 		>
 			+
 		</button>

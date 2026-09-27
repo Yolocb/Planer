@@ -23,41 +23,41 @@ const results = {};
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.waitForSelector('.fc', { timeout: 10000 });
 
-// --- 1. Defaults to "frisch" (blue accent) ---
+// --- 1. Defaults to "modern" (indigo accent) ---
 results.initialPalette = await paletteAttr();
-const frischAccent = await accent();
+const modernAccent = await accent();
 
-// --- 2. Switch to "Sonne" → attr + accent var + storage all change ---
+// --- 2. Switch to "Feminin" → attr + accent var + storage all change ---
 await page.getByRole('button', { name: 'Farbthema wählen' }).click();
-await page.getByRole('menuitemradio', { name: /Sonne/ }).click();
+await page.getByRole('menuitemradio', { name: /Feminin/ }).click();
 await page.waitForTimeout(150);
-const sonnePalette = await paletteAttr();
-const sonneAccent = await accent();
-results.switchedToSonne = sonnePalette === 'sonne' && sonneAccent !== frischAccent;
-results.sonnePersisted = (await stored()) === 'sonne';
+const femininPalette = await paletteAttr();
+const femininAccent = await accent();
+results.switchedToFeminin = femininPalette === 'feminin' && femininAccent !== modernAccent;
+results.femininPersisted = (await stored()) === 'feminin';
 
-// --- 3. Switch to "Ozean" → distinct accent again ---
+// --- 3. Switch to "Kind" → distinct accent again ---
 await page.getByRole('button', { name: 'Farbthema wählen' }).click();
-await page.getByRole('menuitemradio', { name: /Ozean/ }).click();
+await page.getByRole('menuitemradio', { name: /Kind/ }).click();
 await page.waitForTimeout(150);
-const ozeanAccent = await accent();
-results.switchedToOzean =
-	(await paletteAttr()) === 'ozean' && ozeanAccent !== sonneAccent && ozeanAccent !== frischAccent;
+const kindAccent = await accent();
+results.switchedToKind =
+	(await paletteAttr()) === 'kind' && kindAccent !== femininAccent && kindAccent !== modernAccent;
 
 // --- 4. Persists across reload (new session) ---
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(300);
-results.persistsAfterReload = (await paletteAttr()) === 'ozean';
+results.persistsAfterReload = (await paletteAttr()) === 'kind';
 
 results.consoleErrors = consoleErrors;
 console.log(JSON.stringify(results, null, 2));
 await browser.close();
 process.exit(
 	consoleErrors.length === 0 &&
-		results.initialPalette === 'frisch' &&
-		results.switchedToSonne &&
-		results.sonnePersisted &&
-		results.switchedToOzean &&
+		results.initialPalette === 'modern' &&
+		results.switchedToFeminin &&
+		results.femininPersisted &&
+		results.switchedToKind &&
 		results.persistsAfterReload
 		? 0
 		: 1

@@ -12,11 +12,12 @@
 	--color-family: #f5a623;
 
 	/* Surfaces + accent are palette-driven (see @layer base). These defaults */
-	/* match the "frisch" light palette and generate the utility classes.     */
-	--color-bg: #fafafa;
+	/* match the "modern" light theme and generate the utility classes.       */
+	--color-bg: #f4f5f7;
 	--color-surface: #ffffff;
-	--color-text: #1a1a2e;
-	--color-accent: #4a90d9;
+	--color-text: #0f1729;
+	--color-accent: #6366f1;
+	--color-accent-2: #8b5cf6;
 
 	--font-sans:
 		system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji',
@@ -24,59 +25,72 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Palettes — each reskins bg / surface / text / accent and ships a    */
-/* light + dark variant. Member colours stay fixed (identity). The     */
-/* `bg-surface` / `text-text` / `bg-accent` utilities read these vars, */
-/* so overriding them per [data-palette] cascades automatically.       */
-/* Selected via data-palette on <html>; .dark picks the dark variant.  */
+/* Themes — each is a full look: palette + a soft background wash +    */
+/* a two-stop accent gradient (buttons / FAB). Light + dark variants.  */
+/* Member colours stay fixed (identity). The bg-surface / text-text /  */
+/* bg-accent utilities read these vars, so overriding them per         */
+/* [data-palette] cascades automatically. .dark picks the dark variant.*/
 /* ------------------------------------------------------------------ */
 @layer base {
-	/* Frisch — crisp neutral (default) */
+	/* Modern — sleek, cool, high-contrast. Indigo→violet accent. (default) */
 	:root,
-	[data-palette='frisch'] {
-		--color-bg: #fafafa;
+	[data-palette='modern'] {
+		--color-bg: #f4f5f7;
 		--color-surface: #ffffff;
-		--color-text: #1a1a2e;
-		--color-accent: #4a90d9;
+		--color-text: #0f1729;
+		--color-accent: #6366f1;
+		--color-accent-2: #8b5cf6;
+		--bg-gradient: radial-gradient(120% 80% at 100% 0%, #eef0ff 0%, #f4f5f7 55%);
 	}
 	.dark,
-	[data-palette='frisch'].dark {
-		--color-bg: #14141f;
-		--color-surface: #1f1f2e;
-		--color-text: #f0f0f5;
-		--color-accent: #5b9fe3;
+	[data-palette='modern'].dark {
+		--color-bg: #0b0f1a;
+		--color-surface: #151b2b;
+		--color-text: #e7ebf3;
+		--color-accent: #818cf8;
+		--color-accent-2: #a78bfa;
+		--bg-gradient: radial-gradient(120% 80% at 100% 0%, #17203a 0%, #0b0f1a 55%);
 	}
 
-	/* Sonne — warm golden-hour */
-	[data-palette='sonne'] {
-		--color-bg: #fdf6ec;
-		--color-surface: #fffdf8;
-		--color-text: #3a2f28;
-		--color-accent: #e8912f;
+	/* Feminin — soft, elegant, rosy. Rose→lavender accent + blush wash. */
+	[data-palette='feminin'] {
+		--color-bg: #fbf1f6;
+		--color-surface: #fffafd;
+		--color-text: #4a2c3d;
+		--color-accent: #e0699a;
+		--color-accent-2: #b57edc;
+		--bg-gradient: linear-gradient(155deg, #fdf2f7 0%, #f4ecfb 100%);
 	}
-	[data-palette='sonne'].dark {
-		--color-bg: #241c16;
-		--color-surface: #302620;
-		--color-text: #f6ede2;
-		--color-accent: #f2a844;
-	}
-
-	/* Ozean — cool calm teal */
-	[data-palette='ozean'] {
-		--color-bg: #eef4f8;
-		--color-surface: #ffffff;
-		--color-text: #12303a;
-		--color-accent: #2a9d9a;
-	}
-	[data-palette='ozean'].dark {
-		--color-bg: #0f2028;
-		--color-surface: #152b35;
-		--color-text: #e6f1f4;
-		--color-accent: #3fb8b3;
+	[data-palette='feminin'].dark {
+		--color-bg: #241820;
+		--color-surface: #30212a;
+		--color-text: #f7e8f0;
+		--color-accent: #f08cb4;
+		--color-accent-2: #c99ae6;
+		--bg-gradient: linear-gradient(155deg, #291a22 0%, #201826 100%);
 	}
 
-	/* FullCalendar + inline styles read these; keep them in sync. */
+	/* Kind — warm, sunny, playful. Orange→pink accent + cream wash. */
+	[data-palette='kind'] {
+		--color-bg: #fff7ea;
+		--color-surface: #fffdf9;
+		--color-text: #3f2f1e;
+		--color-accent: #ff8a3d;
+		--color-accent-2: #ff6b9d;
+		--bg-gradient: linear-gradient(155deg, #fff6e6 0%, #fff0f5 100%);
+	}
+	[data-palette='kind'].dark {
+		--color-bg: #241c12;
+		--color-surface: #30261a;
+		--color-text: #fbeeda;
+		--color-accent: #ffa45c;
+		--color-accent-2: #ff86b0;
+		--bg-gradient: linear-gradient(155deg, #2b2013 0%, #2a1a1f 100%);
+	}
+
+	/* Derived once — recomputes per theme because it reads the vars above. */
 	:root {
+		--accent-gradient: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-2) 100%);
 		--fc-bg: var(--color-bg);
 		--fc-surface: var(--color-surface);
 		--fc-text: var(--color-text);
@@ -90,6 +104,8 @@
 	body {
 		margin: 0;
 		background-color: var(--fc-bg);
+		background-image: var(--bg-gradient, none);
+		background-attachment: fixed;
 		color: var(--fc-text);
 		font-family: var(--font-sans);
 		-webkit-font-smoothing: antialiased;
@@ -115,8 +131,12 @@
 	.btn-lg {
 		@apply py-3.5 text-base;
 	}
+	/* Gradient fill + a soft accent-tinted glow for depth. */
 	.btn-primary {
-		@apply bg-accent text-white shadow-sm;
+		@apply text-white;
+		background-color: var(--color-accent);
+		background-image: var(--accent-gradient);
+		box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--color-accent) 65%, transparent);
 	}
 	.btn-secondary {
 		@apply bg-black/5 text-text hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15;

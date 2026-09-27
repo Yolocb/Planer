@@ -3,9 +3,24 @@
 	import type { PaletteSetting } from '$lib/types';
 
 	const PALETTES: { id: PaletteSetting; name: string; swatch: string; hint: string }[] = [
-		{ id: 'frisch', name: 'Frisch', swatch: '#4a90d9', hint: 'Klar & neutral' },
-		{ id: 'sonne', name: 'Sonne', swatch: '#e8912f', hint: 'Warm & gemütlich' },
-		{ id: 'ozean', name: 'Ozean', swatch: '#2a9d9a', hint: 'Kühl & ruhig' }
+		{
+			id: 'modern',
+			name: 'Modern',
+			swatch: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+			hint: 'Sleek & klar'
+		},
+		{
+			id: 'feminin',
+			name: 'Feminin',
+			swatch: 'linear-gradient(135deg,#e0699a,#b57edc)',
+			hint: 'Sanft & elegant'
+		},
+		{
+			id: 'kind',
+			name: 'Kind',
+			swatch: 'linear-gradient(135deg,#ff8a3d,#ff6b9d)',
+			hint: 'Bunt & verspielt'
+		}
 	];
 
 	let open = $state(false);
@@ -55,7 +70,7 @@
 				>
 					<span
 						class="size-6 shrink-0 rounded-full ring-1 ring-black/10 dark:ring-white/15"
-						style={`background-color: ${p.swatch};`}
+						style={`background: ${p.swatch};`}
 						aria-hidden="true"
 					></span>
 					<span class="min-w-0 flex-1">

@@ -1,15 +1,17 @@
 import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
-import type { AppSettings } from '$lib/types';
+import type { AppSettings, PaletteSetting } from '$lib/types';
 
 const STORAGE_KEY = 'familycal-settings';
+
+const PALETTES: PaletteSetting[] = ['modern', 'feminin', 'kind'];
 
 export const DEFAULT_SETTINGS: AppSettings = {
 	defaultView: 'week',
 	weekStartsOn: 1,
 	timeFormat: '24h',
 	theme: 'auto',
-	palette: 'frisch'
+	palette: 'modern'
 };
 
 function load(): AppSettings {
@@ -18,7 +20,10 @@ function load(): AppSettings {
 		const raw = localStorage.getItem(STORAGE_KEY);
 		if (!raw) return { ...DEFAULT_SETTINGS };
 		// Merge so newly-added settings keys fall back to defaults.
-		return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<AppSettings>) };
+		const merged = { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<AppSettings>) };
+		// Migrate retired palette names (frisch/sonne/ozean) to the default.
+		if (!PALETTES.includes(merged.palette)) merged.palette = DEFAULT_SETTINGS.palette;
+		return merged;
 	} catch {
 		return { ...DEFAULT_SETTINGS };
 	}

@@ -79,8 +79,8 @@ export interface Chore {
 
 export type CalendarViewId = 'week' | 'month' | 'day' | 'agenda';
 export type ThemeSetting = 'light' | 'dark' | 'auto';
-/** Colour palette, orthogonal to light/dark: each has a light + dark variant. */
-export type PaletteSetting = 'frisch' | 'sonne' | 'ozean';
+/** Colour theme, orthogonal to light/dark: each has a light + dark variant. */
+export type PaletteSetting = 'modern' | 'feminin' | 'kind';
 
 export interface AppSettings {
 	defaultView: CalendarViewId;
