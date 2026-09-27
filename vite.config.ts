@@ -16,8 +16,10 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			// Static SPA build for GitHub Pages. fallback => single-page-app routing.
-			adapter: adapter({ fallback: '200.html', strict: false }),
+			// Static SPA build for GitHub Pages. GitHub serves 404.html for any
+			// unmatched path, so that is our SPA fallback; the deploy workflow also
+			// copies it to index.html so the root URL resolves with a 200.
+			adapter: adapter({ fallback: '404.html', strict: false }),
 			paths: { base },
 			// SPA: don't try to crawl/prerender routes at build time.
 			prerender: { entries: [] }

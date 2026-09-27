@@ -51,3 +51,14 @@ Pushing to `main` runs `.github/workflows/deploy.yml`, which builds with
 - Sprint 4 — Feli's child view & chores
 - Sprint 5 — import/export & settings page
 - Sprint 6 — polish, performance, PWA finalisation
+
+## Backlog
+
+- **Native mobile calendar integration (iOS & Android)** — let family members
+  add FamilyCal events to their phone's built-in calendar (Apple Calendar /
+  Google Calendar). Since the app is backend-less, this is delivered as `.ics`
+  export: a per-event "Add to calendar" download and a bulk "Export all" file,
+  which iOS and Android both open natively into their calendar apps. (A live,
+  auto-refreshing `webcal://` subscription feed would need a server and is out
+  of scope for the static-site architecture.) Planned for a later sprint,
+  building on the Sprint 5 iCal export work.

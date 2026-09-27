@@ -34,6 +34,10 @@ jobs:
         env:
           BASE_PATH: /Planer
 
+      # GitHub Pages serves index.html for the site root; adapter-static only
+      # emits the 404.html SPA fallback, so mirror it to index.html for a 200.
+      - run: cp build/404.html build/index.html
+
       - uses: actions/configure-pages@v5
         with:
           enablement: true
