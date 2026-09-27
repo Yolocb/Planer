@@ -1,0 +1,53 @@
+# FamilyCal
+
+A mobile-first, offline-capable **family calendar** for the Schumacher family
+(Christian · Janina · Feli), deployed as a static SPA to GitHub Pages.
+
+Live: https://Yolocb.github.io/Planer/ (after first deploy)
+
+## Stack
+
+- **SvelteKit** (Svelte 5, runes) + **Vite**, static SPA via `@sveltejs/adapter-static`
+- **FullCalendar v6** (day-grid / time-grid / list / interaction) — week, month, day & agenda views
+- **Tailwind CSS v4** with the family colour tokens
+- **IndexedDB** (`idb`) for events & chores + `localStorage` for settings — no backend, all data on-device
+- **PWA** via `@vite-pwa/sveltekit` (installable, offline)
+- **iCal** import/export (`ical.js` / `ics`)
+- **Vitest** (unit/integration) + **Playwright** (e2e)
+
+## Colour system
+
+| Person | Colour |
+|--------|--------|
+| Christian | `#4A90D9` (blue) |
+| Janina | `#E87C6B` (coral) |
+| Feli | `#6BBF6E` (green) |
+| Familie / shared | `#F5A623` (amber) |
+
+## Development
+
+```bash
+npm install
+npm run dev        # dev server at /Planer/
+npm run check      # svelte-check (types)
+npm run lint       # prettier --check + eslint
+npm run format     # prettier --write
+npm run build      # static build → build/
+npm run test       # vitest
+npm run icons      # regenerate PWA icons
+```
+
+## Deployment
+
+Pushing to `main` runs `.github/workflows/deploy.yml`, which builds with
+`BASE_PATH=/Planer` and publishes `build/` to GitHub Pages. Set the repo's
+**Settings → Pages → Source** to **GitHub Actions**.
+
+## Status
+
+- **Sprint 1** — project setup, types, IndexedDB store, settings, app shell, PWA, CI ✅
+- **Sprint 2** — calendar core (all views, colouring, person filter, navigation) ✅
+- Sprint 3 — event CRUD, recurrence, drag-and-drop _(next)_
+- Sprint 4 — Feli's child view & chores
+- Sprint 5 — import/export & settings page
+- Sprint 6 — polish, performance, PWA finalisation

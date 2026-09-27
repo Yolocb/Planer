@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ */
+/* FamilyCal design tokens — the family colour system + surfaces.      */
+/* Exposed as Tailwind v4 theme tokens so `bg-christian`, `text-family` */
+/* etc. work, and as raw CSS vars for FullCalendar / inline styles.     */
+/* ------------------------------------------------------------------ */
+@theme {
+	--color-christian: #4a90d9;
+	--color-janina: #e87c6b;
+	--color-feli: #6bbf6e;
+	--color-family: #f5a623;
+
+	--color-bg: #fafafa;
+	--color-surface: #ffffff;
+	--color-text: #1a1a2e;
+
+	--font-sans:
+		system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+		'Segoe UI Emoji';
+}
+
+/* Dark theme surfaces (activated by `.dark` on <html>, set from settings). */
+@layer base {
+	:root {
+		--fc-bg: var(--color-bg);
+		--fc-surface: var(--color-surface);
+		--fc-text: var(--color-text);
+	}
+
+	.dark {
+		--fc-bg: #14141f;
+		--fc-surface: #1f1f2e;
+		--fc-text: #f0f0f5;
+	}
+
+	html,
+	body {
+		height: 100%;
+	}
+
+	body {
+		margin: 0;
+		background-color: var(--fc-bg);
+		color: var(--fc-text);
+		font-family: var(--font-sans);
+		-webkit-font-smoothing: antialiased;
+		/* Respect iOS safe areas for the bottom nav. */
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+
+	/* Minimum comfortable tap targets (NFR-06: >= 44x44). */
+	button {
+		touch-action: manipulation;
+	}
+}
