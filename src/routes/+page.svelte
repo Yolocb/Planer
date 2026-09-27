@@ -10,6 +10,7 @@
 	import KidView from '$lib/components/KidView.svelte';
 	import ChoreModal from '$lib/components/ChoreModal.svelte';
 	import ChoresSheet from '$lib/components/ChoresSheet.svelte';
+	import ThemeSwitcher from '$lib/components/ThemeSwitcher.svelte';
 	import {
 		events,
 		filteredEvents,
@@ -235,13 +236,16 @@
 			<h1 class="text-lg font-bold tracking-tight">
 				<span class="text-christian">Family</span><span class="text-family">Cal</span>
 			</h1>
-			<button
-				type="button"
-				onclick={openChores}
-				class="flex min-h-9 items-center gap-1.5 rounded-full bg-black/5 px-3 text-sm font-medium hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15"
-			>
-				<span aria-hidden="true">✅</span> Aufgaben
-			</button>
+			<div class="flex items-center gap-1.5">
+				<ThemeSwitcher />
+				<button
+					type="button"
+					onclick={openChores}
+					class="flex min-h-9 items-center gap-1.5 rounded-full bg-black/5 px-3 text-sm font-medium hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15"
+				>
+					<span aria-hidden="true">✅</span> Aufgaben
+				</button>
+			</div>
 		</div>
 		{#if !kidMode}
 			<div class="flex items-center justify-between px-2 pb-2">
@@ -304,7 +308,7 @@
 			onclick={openAddEvent}
 			aria-label="Termin hinzufügen"
 			class="fixed bottom-20 right-4 z-20 grid size-14 place-items-center rounded-full text-3xl text-white shadow-lg transition-transform active:scale-95"
-			style="background-color: var(--color-family)"
+			style="background-color: var(--color-accent)"
 		>
 			+
 		</button>
@@ -332,7 +336,7 @@
 				aria-current={!kidMode && currentTab === item.id ? 'page' : undefined}
 				class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs {!kidMode &&
 				currentTab === item.id
-					? 'font-semibold text-christian'
+					? 'font-semibold text-accent'
 					: 'opacity-60'}"
 			>
 				<span class="text-lg" aria-hidden="true">{item.icon}</span>

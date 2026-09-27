@@ -8,7 +8,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	defaultView: 'week',
 	weekStartsOn: 1,
 	timeFormat: '24h',
-	theme: 'auto'
+	theme: 'auto',
+	palette: 'frisch'
 };
 
 function load(): AppSettings {
