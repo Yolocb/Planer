@@ -39,6 +39,10 @@ await page.getByRole('button', { name: 'Termin hinzufügen' }).click();
 await page.waitForSelector('#ev-title', { timeout: 5000 });
 results.modalOpened = true;
 await page.fill('#ev-title', 'Smoke Test Termin');
+// Pin an explicit mid-morning time so the test doesn't depend on the wall
+// clock (the default "next full hour" could land outside the day at night).
+await page.fill('#ev-start-time', '10:00');
+await page.fill('#ev-end-time', '11:00');
 await page.getByRole('button', { name: 'Termin erstellen' }).click();
 await page.waitForTimeout(500);
 results.dbCountAfterCreate = await dbCount();

@@ -272,30 +272,39 @@
 			<!-- Start / End -->
 			<div class="space-y-2">
 				<div class="flex items-center gap-2">
-					<span class="w-12 shrink-0 text-xs font-medium opacity-60">Start</span>
+					<span class="w-12 shrink-0 text-xs font-medium opacity-60" id="ev-start-label">Start</span
+					>
 					<input
 						type="date"
+						id="ev-start-date"
+						aria-labelledby="ev-start-label"
 						bind:value={startDate}
 						class="flex-1 rounded-xl border border-black/10 bg-surface px-3 py-2 dark:border-white/15"
 					/>
 					{#if !allDay}
 						<input
 							type="time"
+							id="ev-start-time"
+							aria-label="Startzeit"
 							bind:value={startTime}
 							class="rounded-xl border border-black/10 bg-surface px-3 py-2 dark:border-white/15"
 						/>
 					{/if}
 				</div>
 				<div class="flex items-center gap-2">
-					<span class="w-12 shrink-0 text-xs font-medium opacity-60">Ende</span>
+					<span class="w-12 shrink-0 text-xs font-medium opacity-60" id="ev-end-label">Ende</span>
 					<input
 						type="date"
+						id="ev-end-date"
+						aria-labelledby="ev-end-label"
 						bind:value={endDate}
 						class="flex-1 rounded-xl border border-black/10 bg-surface px-3 py-2 dark:border-white/15"
 					/>
 					{#if !allDay}
 						<input
 							type="time"
+							id="ev-end-time"
+							aria-label="Endzeit"
 							bind:value={endTime}
 							class="rounded-xl border border-black/10 bg-surface px-3 py-2 dark:border-white/15"
 						/>

@@ -125,8 +125,12 @@
 			headerToolbar: false,
 			locale: deLocale,
 			firstDay: weekStartsOn,
-			slotMinTime: '06:00:00',
-			slotMaxTime: '22:00:00',
+			// Cover the full day so events at any hour are always visible in the
+			// time grid (a fixed 06–22 window silently clipped late/early events).
+			// Open scrolled to the morning so the default view stays comfortable.
+			slotMinTime: '00:00:00',
+			slotMaxTime: '24:00:00',
+			scrollTime: '07:00:00',
 			nowIndicator: true,
 			height: '100%',
 			expandRows: true,
