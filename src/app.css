@@ -54,3 +54,26 @@
 		touch-action: manipulation;
 	}
 }
+
+/* ------------------------------------------------------------------ */
+/* Shared button styles — one consistent look for primary / secondary  */
+/* / danger actions across the modal, detail sheet and dialogs.        */
+/* ------------------------------------------------------------------ */
+@layer components {
+	.btn {
+		@apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-christian focus-visible:ring-offset-2;
+	}
+	/* Larger, high-emphasis variant for the primary form action. */
+	.btn-lg {
+		@apply py-3.5 text-base;
+	}
+	.btn-primary {
+		@apply bg-christian text-white shadow-sm;
+	}
+	.btn-secondary {
+		@apply bg-black/5 text-text hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15;
+	}
+	.btn-danger {
+		@apply bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400;
+	}
+}

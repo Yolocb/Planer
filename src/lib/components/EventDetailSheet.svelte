@@ -129,20 +129,8 @@
 
 			<!-- Actions -->
 			<div class="flex gap-2 border-t border-black/5 px-5 py-3 dark:border-white/10">
-				<button
-					type="button"
-					class="min-h-11 flex-1 rounded-xl bg-christian px-4 py-2.5 text-sm font-semibold text-white active:scale-[0.98]"
-					onclick={onEdit}
-				>
-					Bearbeiten
-				</button>
-				<button
-					type="button"
-					class="min-h-11 flex-1 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 active:scale-[0.98] dark:bg-red-500/15 dark:text-red-400"
-					onclick={onDelete}
-				>
-					Löschen
-				</button>
+				<button type="button" class="btn btn-primary flex-1" onclick={onEdit}> Bearbeiten </button>
+				<button type="button" class="btn btn-danger flex-1" onclick={onDelete}> Löschen </button>
 			</div>
 		</div>
 	</div>

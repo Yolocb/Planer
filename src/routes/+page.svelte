@@ -3,7 +3,7 @@
 	import { get } from 'svelte/store';
 	import CalendarView from '$lib/components/CalendarView.svelte';
 	import type { FcViewId } from '$lib/components/CalendarView.svelte';
-	import PersonFilterBar from '$lib/components/PersonFilterBar.svelte';
+	import PersonLegend from '$lib/components/PersonLegend.svelte';
 	import EventModal from '$lib/components/EventModal.svelte';
 	import EventDetailSheet from '$lib/components/EventDetailSheet.svelte';
 	import RecurrenceScopeDialog from '$lib/components/RecurrenceScopeDialog.svelte';
@@ -200,13 +200,6 @@
 			<h1 class="text-lg font-bold tracking-tight">
 				<span class="text-christian">Family</span><span class="text-family">Cal</span>
 			</h1>
-			<button
-				type="button"
-				aria-label="Menü öffnen"
-				class="grid size-11 place-items-center rounded-full text-xl hover:bg-black/5 dark:hover:bg-white/10"
-			>
-				☰
-			</button>
 		</div>
 		<div class="flex items-center justify-between px-2 pb-2">
 			<button
@@ -229,8 +222,8 @@
 		</div>
 	</header>
 
-	<!-- Person filter bar (doubles as the always-visible colour legend) -->
-	<PersonFilterBar />
+	<!-- Person colour legend (no filtering — everyone sees all entries) -->
+	<PersonLegend />
 
 	<!-- Calendar -->
 	<main

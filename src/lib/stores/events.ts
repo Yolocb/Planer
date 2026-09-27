@@ -1,7 +1,6 @@
 import { derived, get, writable } from 'svelte/store';
 import { getEvents, saveEvent, deleteEvent } from './db';
-import { settings } from './settings';
-import type { CalendarEvent, EventOwnerId } from '$lib/types';
+import type { CalendarEvent } from '$lib/types';
 
 /** All events currently loaded from IndexedDB. */
 export const events = writable<CalendarEvent[]>([]);
@@ -23,21 +22,11 @@ export async function loadEvents(): Promise<void> {
 }
 
 /**
- * Pure person-filter: keep events that have at least one owner in `activeFilters`.
- * Extracted so it can be unit-tested independently of the store.
+ * Every stored event. Per the family's decision there is no per-person
+ * filtering — everyone always sees all calendar entries. The person colours
+ * live on in the legend and event chips only.
  */
-export function filterEventsByPerson(
-	list: CalendarEvent[],
-	activeFilters: EventOwnerId[]
-): CalendarEvent[] {
-	if (activeFilters.length === 0) return [];
-	return list.filter((e) => e.personIds.some((pid) => activeFilters.includes(pid)));
-}
-
-/** Events after applying the current person filter from settings. */
-export const filteredEvents = derived([events, settings], ([$events, $settings]) =>
-	filterEventsByPerson($events, $settings.activeFilters)
-);
+export const filteredEvents = derived(events, ($events) => $events);
 
 // -------------------------------------------------------------------------
 // CRUD — writes go to IndexedDB and the in-memory store together.

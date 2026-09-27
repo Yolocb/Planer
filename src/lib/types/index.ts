@@ -85,8 +85,6 @@ export interface AppSettings {
 	/** 0 = Sunday, 1 = Monday. */
 	weekStartsOn: 0 | 1;
 	timeFormat: '12h' | '24h';
-	/** Which owners' events are currently shown. */
-	activeFilters: EventOwnerId[];
 	theme: ThemeSetting;
 	lastVisitedDate?: string;
 }

@@ -8,7 +8,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	defaultView: 'week',
 	weekStartsOn: 1,
 	timeFormat: '24h',
-	activeFilters: ['christian', 'janina', 'feli', 'family'],
 	theme: 'auto'
 };
 

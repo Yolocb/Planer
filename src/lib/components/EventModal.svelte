@@ -197,26 +197,25 @@
 
 {#if open}
 	<div class="fixed inset-0 z-50 flex flex-col bg-bg text-text" role="dialog" aria-modal="true">
-		<!-- Sticky header -->
+		<!-- Header: close + centered title (Save lives in the bottom bar) -->
 		<header
-			class="flex items-center justify-between border-b border-black/5 bg-surface px-3 py-3 dark:border-white/10"
+			class="flex items-center gap-2 border-b border-black/5 bg-surface px-3 py-3 dark:border-white/10"
 		>
-			<button type="button" class="min-h-11 px-2 text-sm opacity-70" onclick={onClose}>
-				Abbrechen
-			</button>
-			<h2 class="text-base font-bold">{isEditing ? 'Termin bearbeiten' : 'Neuer Termin'}</h2>
 			<button
 				type="button"
-				class="min-h-11 rounded-lg px-3 text-sm font-semibold text-christian"
-				onclick={save}
+				aria-label="Abbrechen"
+				class="grid size-9 place-items-center rounded-full text-lg opacity-70 hover:bg-black/5 dark:hover:bg-white/10"
+				onclick={onClose}
 			>
-				Speichern
+				✕
 			</button>
+			<h2 class="flex-1 text-center text-base font-bold">
+				{isEditing ? 'Termin bearbeiten' : 'Neuer Termin'}
+			</h2>
+			<span class="size-9" aria-hidden="true"></span>
 		</header>
 
-		<div
-			class="flex-1 space-y-5 overflow-y-auto px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]"
-		>
+		<div class="flex-1 space-y-5 overflow-y-auto px-4 py-4">
 			{#if error}
 				<p
 					class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/15 dark:text-red-400"
@@ -450,5 +449,15 @@
 				></textarea>
 			</div>
 		</div>
+
+		<!-- Prominent, always-visible action bar (Save is the dominant element) -->
+		<footer
+			class="flex gap-2 border-t border-black/5 bg-surface px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] dark:border-white/10"
+		>
+			<button type="button" class="btn btn-secondary" onclick={onClose}>Abbrechen</button>
+			<button type="button" class="btn btn-primary btn-lg flex-1" onclick={save}>
+				{isEditing ? 'Speichern' : 'Termin erstellen'}
+			</button>
+		</footer>
 	</div>
 {/if}
