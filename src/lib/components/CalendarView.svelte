@@ -7,15 +7,17 @@
 		type EventClickArg,
 		type DateSelectArg,
 		type DatesSetArg,
-		type EventContentArg
+		type EventContentArg,
+		type EventDropArg
 	} from '@fullcalendar/core';
 	import dayGridPlugin from '@fullcalendar/daygrid';
 	import timeGridPlugin from '@fullcalendar/timegrid';
 	import listPlugin from '@fullcalendar/list';
-	import interactionPlugin from '@fullcalendar/interaction';
+	import interactionPlugin, { type EventResizeDoneArg } from '@fullcalendar/interaction';
 	import deLocale from '@fullcalendar/core/locales/de';
 	import { PERSON_BY_ID } from '$lib/constants/persons';
 	import { getEventDisplayColor, isGradient } from '$lib/utils/colors';
+	import { expandRecurrences, isOccurrenceId } from '$lib/utils/recurrence';
 	import type { CalendarEvent, EventOwnerId } from '$lib/types';
 
 	export type FcViewId = 'timeGridWeek' | 'dayGridMonth' | 'timeGridDay' | 'listWeek';
@@ -28,6 +30,8 @@
 		onEventClick?: (event: CalendarEvent) => void;
 		onSlotSelect?: (sel: { start: Date; end: Date; allDay: boolean }) => void;
 		onRangeChange?: (title: string) => void;
+		/** Persist a drag/resize of a non-recurring event (ISO start/end). */
+		onEventDrop?: (id: string, start: string, end: string, allDay: boolean) => void;
 		/** Bindable imperative controls (today / prev / next). */
 		api?: { today: () => void; prev: () => void; next: () => void } | undefined;
 	}
@@ -40,6 +44,7 @@
 		onEventClick,
 		onSlotSelect,
 		onRangeChange,
+		onEventDrop,
 		api = $bindable()
 	}: Props = $props();
 
@@ -53,8 +58,29 @@
 			start: e.start,
 			end: e.end,
 			allDay: e.allDay,
+			// Virtual recurrence occurrences must not be dragged/resized directly.
+			editable: !isOccurrenceId(e.id),
 			extendedProps: { raw: e }
 		}));
+	}
+
+	function timeFormatOption() {
+		return { hour: '2-digit', minute: '2-digit', hour12: timeFormat === '12h' } as const;
+	}
+
+	function emitDrop(arg: EventDropArg | EventResizeDoneArg) {
+		const raw = arg.event.extendedProps.raw as CalendarEvent | undefined;
+		if (!raw || isOccurrenceId(raw.id)) {
+			arg.revert();
+			return;
+		}
+		const start = arg.event.start?.toISOString();
+		if (!start) {
+			arg.revert();
+			return;
+		}
+		const end = arg.event.end?.toISOString() ?? start;
+		onEventDrop?.(raw.id, start, end, arg.event.allDay);
 	}
 
 	/** Build the custom chip content: person-initial badge(s) + title. */
@@ -108,12 +134,11 @@
 			selectable: true,
 			selectMirror: true,
 			dayMaxEvents: 3,
-			eventTimeFormat: {
-				hour: '2-digit',
-				minute: '2-digit',
-				hour12: timeFormat === '12h'
+			eventTimeFormat: timeFormatOption(),
+			events: (info, success) => {
+				// `events` is read live here so each fetch expands the current list.
+				success(toFcEvents(expandRecurrences(events, info.start, info.end)));
 			},
-			events: toFcEvents(events),
 			eventContent: renderEventContent,
 			eventDidMount(info) {
 				const raw = info.event.extendedProps.raw as CalendarEvent | undefined;
@@ -131,6 +156,8 @@
 				const raw = arg.event.extendedProps.raw as CalendarEvent | undefined;
 				if (raw) onEventClick?.(raw);
 			},
+			eventDrop: emitDrop,
+			eventResize: emitDrop,
 			select(arg: DateSelectArg) {
 				onSlotSelect?.({ start: arg.start, end: arg.end, allDay: arg.allDay });
 			},
@@ -156,16 +183,17 @@
 		if (calendar) calendar.changeView(view);
 	});
 
-	// React to filtered events changing.
+	// React to filtered/edited events changing — re-run the feed for the range.
 	$effect(() => {
-		if (!calendar) return;
-		calendar.removeAllEvents();
-		calendar.addEventSource(toFcEvents(events));
+		// Reading `events` here registers the dependency that triggers refetch.
+		if (events) calendar?.refetchEvents();
 	});
 
-	// React to settings changes.
+	// React to week-start / time-format settings changes.
 	$effect(() => {
-		if (calendar) calendar.setOption('firstDay', weekStartsOn);
+		if (!calendar) return;
+		calendar.setOption('firstDay', weekStartsOn);
+		calendar.setOption('eventTimeFormat', timeFormatOption());
 	});
 </script>
 

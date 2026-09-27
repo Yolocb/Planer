@@ -4,8 +4,27 @@
 	import CalendarView from '$lib/components/CalendarView.svelte';
 	import type { FcViewId } from '$lib/components/CalendarView.svelte';
 	import PersonFilterBar from '$lib/components/PersonFilterBar.svelte';
-	import { filteredEvents, loadEvents, eventsLoaded } from '$lib/stores/events';
+	import EventModal from '$lib/components/EventModal.svelte';
+	import EventDetailSheet from '$lib/components/EventDetailSheet.svelte';
+	import RecurrenceScopeDialog from '$lib/components/RecurrenceScopeDialog.svelte';
+	import {
+		events,
+		filteredEvents,
+		loadEvents,
+		eventsLoaded,
+		createEvent,
+		updateEvent,
+		removeEvent,
+		deleteOccurrence,
+		deleteFutureOccurrences,
+		deleteSeries,
+		updateOccurrence,
+		updateFutureOccurrences,
+		updateSeries,
+		type NewEventData
+	} from '$lib/stores/events';
 	import { settings } from '$lib/stores/settings';
+	import { isOccurrenceId, masterIdOf } from '$lib/utils/recurrence';
 	import type { CalendarEvent, CalendarViewId } from '$lib/types';
 
 	const VIEW_MAP: Record<CalendarViewId, FcViewId> = {
@@ -49,18 +68,124 @@
 		calApi?.today();
 	}
 
+	// --- Event modal / detail / recurrence-scope orchestration ---
+	let modalOpen = $state(false);
+	let modalEvent = $state<CalendarEvent | null>(null);
+	let modalInitial = $state<{
+		start?: string;
+		end?: string;
+		allDay?: boolean;
+	} | null>(null);
+	/** When editing an occurrence, remember the series + occurrence for scoping. */
+	let editCtx = $state<{ master: CalendarEvent | null; occurrenceIso: string } | null>(null);
+
+	let detailOpen = $state(false);
+	let detailEvent = $state<CalendarEvent | null>(null);
+	let detailMaster = $state<CalendarEvent | null>(null);
+
+	let scopeOpen = $state(false);
+	let scopeMode = $state<'edit' | 'delete'>('edit');
+	let scopeCtx = $state<{
+		master: CalendarEvent | null;
+		occurrenceIso: string;
+		payload: NewEventData | null;
+	} | null>(null);
+
+	function findMaster(id: string): CalendarEvent | null {
+		return get(events).find((e) => e.id === id) ?? null;
+	}
+
 	function handleEventClick(event: CalendarEvent) {
-		// EventDetailSheet lands in Sprint 3.
-		console.log('Event tapped:', event);
+		detailEvent = event;
+		detailMaster = isOccurrenceId(event.id) ? findMaster(masterIdOf(event.id)) : null;
+		detailOpen = true;
 	}
 
 	function handleSlotSelect(sel: { start: Date; end: Date; allDay: boolean }) {
-		// Pre-filled EventModal lands in Sprint 3.
-		console.log('Slot selected:', sel);
+		modalEvent = null;
+		editCtx = null;
+		modalInitial = {
+			start: sel.start.toISOString(),
+			end: sel.end.toISOString(),
+			allDay: sel.allDay
+		};
+		modalOpen = true;
 	}
 
 	function openAddEvent() {
-		console.log('FAB tapped → open Add Event modal (Sprint 3)');
+		modalEvent = null;
+		editCtx = null;
+		modalInitial = null; // modal defaults to the next full hour
+		modalOpen = true;
+	}
+
+	function startEdit() {
+		const raw = detailEvent;
+		if (!raw) return;
+		detailOpen = false;
+		if (isOccurrenceId(raw.id)) {
+			const master = findMaster(masterIdOf(raw.id));
+			// Edit series fields, but anchored at this occurrence's date/time.
+			modalEvent = master ? { ...master, start: raw.start, end: raw.end } : raw;
+			editCtx = { master, occurrenceIso: raw.start };
+		} else {
+			modalEvent = raw;
+			editCtx = null;
+		}
+		modalInitial = null;
+		modalOpen = true;
+	}
+
+	async function confirmDelete() {
+		const raw = detailEvent;
+		if (!raw) return;
+		if (isOccurrenceId(raw.id)) {
+			scopeCtx = {
+				master: findMaster(masterIdOf(raw.id)),
+				occurrenceIso: raw.start,
+				payload: null
+			};
+			scopeMode = 'delete';
+			detailOpen = false;
+			scopeOpen = true;
+		} else {
+			detailOpen = false;
+			await removeEvent(raw.id);
+		}
+	}
+
+	async function handleSave(data: NewEventData) {
+		modalOpen = false;
+		if (!modalEvent) {
+			await createEvent(data);
+		} else if (editCtx?.master) {
+			scopeCtx = { master: editCtx.master, occurrenceIso: editCtx.occurrenceIso, payload: data };
+			scopeMode = 'edit';
+			scopeOpen = true;
+		} else {
+			await updateEvent(modalEvent.id, data);
+		}
+	}
+
+	async function handleScope(scope: 'this' | 'future' | 'all') {
+		scopeOpen = false;
+		const ctx = scopeCtx;
+		scopeCtx = null;
+		if (!ctx?.master) return;
+		const { master, occurrenceIso, payload } = ctx;
+		if (scopeMode === 'delete') {
+			if (scope === 'this') await deleteOccurrence(master.id, occurrenceIso);
+			else if (scope === 'future') await deleteFutureOccurrences(master.id, occurrenceIso);
+			else await deleteSeries(master.id);
+		} else if (payload) {
+			if (scope === 'this') await updateOccurrence(master.id, occurrenceIso, payload);
+			else if (scope === 'future') await updateFutureOccurrences(master.id, occurrenceIso, payload);
+			else await updateSeries(master.id, payload);
+		}
+	}
+
+	async function handleEventDrop(id: string, start: string, end: string, allDay: boolean) {
+		await updateEvent(id, { start, end, allDay });
 	}
 
 	onMount(() => {
@@ -123,6 +248,7 @@
 			timeFormat={$settings.timeFormat}
 			onEventClick={handleEventClick}
 			onSlotSelect={handleSlotSelect}
+			onEventDrop={handleEventDrop}
 			onRangeChange={(t) => (rangeTitle = t)}
 			bind:api={calApi}
 		/>
@@ -167,3 +293,31 @@
 		{/each}
 	</nav>
 </div>
+
+<!-- Add / edit form -->
+<EventModal
+	open={modalOpen}
+	event={modalEvent}
+	initial={modalInitial}
+	onClose={() => (modalOpen = false)}
+	onSave={handleSave}
+/>
+
+<!-- Tap-to-view detail sheet -->
+<EventDetailSheet
+	open={detailOpen}
+	event={detailEvent}
+	master={detailMaster}
+	timeFormat={$settings.timeFormat}
+	onClose={() => (detailOpen = false)}
+	onEdit={startEdit}
+	onDelete={confirmDelete}
+/>
+
+<!-- This / future / all scope picker for recurring events -->
+<RecurrenceScopeDialog
+	open={scopeOpen}
+	mode={scopeMode}
+	onChoose={handleScope}
+	onCancel={() => (scopeOpen = false)}
+/>

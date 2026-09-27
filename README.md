@@ -17,11 +17,11 @@ Live: https://Yolocb.github.io/Planer/ (after first deploy)
 
 ## Colour system
 
-| Person | Colour |
-|--------|--------|
-| Christian | `#4A90D9` (blue) |
-| Janina | `#E87C6B` (coral) |
-| Feli | `#6BBF6E` (green) |
+| Person           | Colour            |
+| ---------------- | ----------------- |
+| Christian        | `#4A90D9` (blue)  |
+| Janina           | `#E87C6B` (coral) |
+| Feli             | `#6BBF6E` (green) |
 | Familie / shared | `#F5A623` (amber) |
 
 ## Development
@@ -47,8 +47,8 @@ Pushing to `main` runs `.github/workflows/deploy.yml`, which builds with
 
 - **Sprint 1** — project setup, types, IndexedDB store, settings, app shell, PWA, CI ✅
 - **Sprint 2** — calendar core (all views, colouring, person filter, navigation) ✅
-- Sprint 3 — event CRUD, recurrence, drag-and-drop _(next)_
-- Sprint 4 — Feli's child view & chores
+- Sprint 3 — event CRUD, recurrence, drag-and-drop ✅
+- Sprint 4 — Feli's child view & chores _(next)_
 - Sprint 5 — import/export & settings page
 - Sprint 6 — polish, performance, PWA finalisation
 
@@ -62,3 +62,7 @@ Pushing to `main` runs `.github/workflows/deploy.yml`, which builds with
   auto-refreshing `webcal://` subscription feed would need a server and is out
   of scope for the static-site architecture.) Planned for a later sprint,
   building on the Sprint 5 iCal export work.
+- **@-mention person tagging in the event form** — while typing a title/notes,
+  entering `@` opens an autocomplete of family members; picking one assigns that
+  person to the event (adds them to `personIds`) and the event colour updates to
+  match. Later-sprint enhancement to the Sprint 3 event form.

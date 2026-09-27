@@ -58,6 +58,8 @@ export interface CalendarEvent {
 	/** Points to the parent series id (for exceptions / expanded occurrences). */
 	recurringEventId?: string;
 	isRecurrenceException?: boolean;
+	/** Occurrence start ISO strings to skip on the master (recurrence exceptions). */
+	exdates?: string[];
 	/** Colour override — defaults to first personId's colour. */
 	color?: string;
 	reminder?: ReminderMinutes;
