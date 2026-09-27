@@ -7,6 +7,9 @@
 	import EventModal from '$lib/components/EventModal.svelte';
 	import EventDetailSheet from '$lib/components/EventDetailSheet.svelte';
 	import RecurrenceScopeDialog from '$lib/components/RecurrenceScopeDialog.svelte';
+	import KidView from '$lib/components/KidView.svelte';
+	import ChoreModal from '$lib/components/ChoreModal.svelte';
+	import ChoresSheet from '$lib/components/ChoresSheet.svelte';
 	import {
 		events,
 		filteredEvents,
@@ -24,8 +27,9 @@
 		type NewEventData
 	} from '$lib/stores/events';
 	import { settings } from '$lib/stores/settings';
+	import { loadChores, createChore, updateChore, type NewChoreData } from '$lib/stores/chores';
 	import { isOccurrenceId, masterIdOf } from '$lib/utils/recurrence';
-	import type { CalendarEvent, CalendarViewId } from '$lib/types';
+	import type { CalendarEvent, CalendarViewId, Chore } from '$lib/types';
 
 	const VIEW_MAP: Record<CalendarViewId, FcViewId> = {
 		week: 'timeGridWeek',
@@ -41,6 +45,8 @@
 	];
 
 	let currentTab = $state<CalendarViewId>(get(settings).defaultView);
+	/** When true, the playful kid view replaces the calendar. */
+	let kidMode = $state(false);
 	let rangeTitle = $state('');
 	let calApi = $state<{ today: () => void; prev: () => void; next: () => void } | undefined>(
 		undefined
@@ -65,6 +71,7 @@
 	}
 
 	function goToday() {
+		kidMode = false;
 		calApi?.today();
 	}
 
@@ -188,8 +195,36 @@
 		await updateEvent(id, { start, end, allDay });
 	}
 
+	// --- Chores: family sheet + add/edit modal ---
+	let choresOpen = $state(false);
+	let choreModalOpen = $state(false);
+	let choreEdit = $state<Chore | null>(null);
+
+	function openChores() {
+		kidMode = false;
+		choresOpen = true;
+	}
+
+	function addChore() {
+		choreEdit = null;
+		choreModalOpen = true;
+	}
+
+	function editChore(chore: Chore) {
+		choreEdit = chore;
+		choresOpen = false;
+		choreModalOpen = true;
+	}
+
+	async function saveChore(data: NewChoreData) {
+		choreModalOpen = false;
+		if (choreEdit) await updateChore(choreEdit.id, data);
+		else await createChore(data);
+	}
+
 	onMount(() => {
 		loadEvents();
+		loadChores();
 	});
 </script>
 
@@ -200,63 +235,80 @@
 			<h1 class="text-lg font-bold tracking-tight">
 				<span class="text-christian">Family</span><span class="text-family">Cal</span>
 			</h1>
-		</div>
-		<div class="flex items-center justify-between px-2 pb-2">
 			<button
 				type="button"
-				aria-label="Vorheriger Zeitraum"
-				onclick={() => calApi?.prev()}
-				class="grid size-10 place-items-center rounded-full text-xl hover:bg-black/5 dark:hover:bg-white/10"
+				onclick={openChores}
+				class="flex min-h-9 items-center gap-1.5 rounded-full bg-black/5 px-3 text-sm font-medium hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15"
 			>
-				‹
-			</button>
-			<span class="text-sm font-semibold">{rangeTitle}</span>
-			<button
-				type="button"
-				aria-label="Nächster Zeitraum"
-				onclick={() => calApi?.next()}
-				class="grid size-10 place-items-center rounded-full text-xl hover:bg-black/5 dark:hover:bg-white/10"
-			>
-				›
+				<span aria-hidden="true">✅</span> Aufgaben
 			</button>
 		</div>
+		{#if !kidMode}
+			<div class="flex items-center justify-between px-2 pb-2">
+				<button
+					type="button"
+					aria-label="Vorheriger Zeitraum"
+					onclick={() => calApi?.prev()}
+					class="grid size-10 place-items-center rounded-full text-xl hover:bg-black/5 dark:hover:bg-white/10"
+				>
+					‹
+				</button>
+				<span class="text-sm font-semibold">{rangeTitle}</span>
+				<button
+					type="button"
+					aria-label="Nächster Zeitraum"
+					onclick={() => calApi?.next()}
+					class="grid size-10 place-items-center rounded-full text-xl hover:bg-black/5 dark:hover:bg-white/10"
+				>
+					›
+				</button>
+			</div>
+		{/if}
 	</header>
 
 	<!-- Person colour legend (no filtering — everyone sees all entries) -->
-	<PersonLegend />
+	{#if !kidMode}
+		<PersonLegend />
+	{/if}
 
-	<!-- Calendar -->
+	<!-- Calendar / kid view -->
 	<main
-		class="relative flex-1 overflow-hidden p-2"
-		ontouchstart={onTouchStart}
-		ontouchend={onTouchEnd}
+		class="relative flex-1 overflow-hidden {kidMode ? '' : 'p-2'}"
+		ontouchstart={kidMode ? undefined : onTouchStart}
+		ontouchend={kidMode ? undefined : onTouchEnd}
 	>
-		{#if !$eventsLoaded}
-			<div class="grid h-full place-items-center text-sm opacity-60">Lade Termine…</div>
+		{#if kidMode}
+			<KidView />
+		{:else}
+			{#if !$eventsLoaded}
+				<div class="grid h-full place-items-center text-sm opacity-60">Lade Termine…</div>
+			{/if}
+			<CalendarView
+				view={fcView}
+				events={$filteredEvents}
+				weekStartsOn={$settings.weekStartsOn}
+				timeFormat={$settings.timeFormat}
+				onEventClick={handleEventClick}
+				onSlotSelect={handleSlotSelect}
+				onEventDrop={handleEventDrop}
+				onRangeChange={(t) => (rangeTitle = t)}
+				bind:api={calApi}
+			/>
 		{/if}
-		<CalendarView
-			view={fcView}
-			events={$filteredEvents}
-			weekStartsOn={$settings.weekStartsOn}
-			timeFormat={$settings.timeFormat}
-			onEventClick={handleEventClick}
-			onSlotSelect={handleSlotSelect}
-			onEventDrop={handleEventDrop}
-			onRangeChange={(t) => (rangeTitle = t)}
-			bind:api={calApi}
-		/>
 	</main>
 
-	<!-- Floating Action Button -->
-	<button
-		type="button"
-		onclick={openAddEvent}
-		aria-label="Termin hinzufügen"
-		class="fixed bottom-20 right-4 z-20 grid size-14 place-items-center rounded-full text-3xl text-white shadow-lg transition-transform active:scale-95"
-		style="background-color: var(--color-family)"
-	>
-		+
-	</button>
+	<!-- Floating Action Button (add event — hidden in kid view) -->
+	{#if !kidMode}
+		<button
+			type="button"
+			onclick={openAddEvent}
+			aria-label="Termin hinzufügen"
+			class="fixed bottom-20 right-4 z-20 grid size-14 place-items-center rounded-full text-3xl text-white shadow-lg transition-transform active:scale-95"
+			style="background-color: var(--color-family)"
+		>
+			+
+		</button>
+	{/if}
 
 	<!-- Bottom navigation -->
 	<nav
@@ -273,10 +325,13 @@
 		{#each NAV_ITEMS as item (item.id)}
 			<button
 				type="button"
-				onclick={() => (currentTab = item.id)}
-				aria-current={currentTab === item.id ? 'page' : undefined}
-				class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs {currentTab ===
-				item.id
+				onclick={() => {
+					currentTab = item.id;
+					kidMode = false;
+				}}
+				aria-current={!kidMode && currentTab === item.id ? 'page' : undefined}
+				class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs {!kidMode &&
+				currentTab === item.id
 					? 'font-semibold text-christian'
 					: 'opacity-60'}"
 			>
@@ -284,6 +339,17 @@
 				{item.label}
 			</button>
 		{/each}
+		<button
+			type="button"
+			onclick={() => (kidMode = true)}
+			aria-current={kidMode ? 'page' : undefined}
+			class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs {kidMode
+				? 'font-semibold text-feli'
+				: 'opacity-60'}"
+		>
+			<span class="text-lg" aria-hidden="true">⭐</span>
+			Feli
+		</button>
 	</nav>
 </div>
 
@@ -313,4 +379,20 @@
 	mode={scopeMode}
 	onChoose={handleScope}
 	onCancel={() => (scopeOpen = false)}
+/>
+
+<!-- Family chores list -->
+<ChoresSheet
+	open={choresOpen}
+	onClose={() => (choresOpen = false)}
+	onAdd={addChore}
+	onEdit={editChore}
+/>
+
+<!-- Add / edit chore -->
+<ChoreModal
+	open={choreModalOpen}
+	chore={choreEdit}
+	onClose={() => (choreModalOpen = false)}
+	onSave={saveChore}
 />

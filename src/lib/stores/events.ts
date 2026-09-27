@@ -1,5 +1,6 @@
 import { derived, get, writable } from 'svelte/store';
 import { getEvents, saveEvent, deleteEvent } from './db';
+import { uid, nowIso } from '$lib/utils/id';
 import type { CalendarEvent } from '$lib/types';
 
 /** All events currently loaded from IndexedDB. */
@@ -31,15 +32,6 @@ export const filteredEvents = derived(events, ($events) => $events);
 // -------------------------------------------------------------------------
 // CRUD — writes go to IndexedDB and the in-memory store together.
 // -------------------------------------------------------------------------
-
-function uid(): string {
-	if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-	return `ev-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function nowIso(): string {
-	return new Date().toISOString();
-}
 
 /** Fields the caller supplies when creating an event. */
 export type NewEventData = Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>;

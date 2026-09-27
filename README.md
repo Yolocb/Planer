@@ -47,11 +47,12 @@ Pushing to `main` runs `.github/workflows/deploy.yml`, which builds with
 
 - **Sprint 1** — project setup, types, IndexedDB store, settings, app shell, PWA, CI ✅
 - **Sprint 2** — calendar core (all views, colouring, navigation) ✅
-- Sprint 3 — event CRUD, recurrence, drag-and-drop ✅
+- **Sprint 3** — event CRUD, recurrence, drag-and-drop ✅
 - **UX pass** — prominent bottom Save bar, shared button styles; removed the
   per-person filter (everyone sees all entries) — fixes new events "vanishing"
   when a stale `activeFilters` was persisted ✅
-- Sprint 4 — Feli's child view & chores _(next)_
+- **Sprint 4** — Feli's child "Heute" view, whole-family chores, dependency-free
+  confetti (respects `prefers-reduced-motion`) ✅
 - Sprint 5 — import/export & settings page
 - Sprint 6 — polish, performance, PWA finalisation
 
