@@ -5,6 +5,8 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { celebrate } from '$lib/utils/confetti';
 	import { FAMILY_MEMBERS } from '$lib/constants/persons';
+	import { getContrastText } from '$lib/utils/colors';
+	import { trapFocus } from '$lib/actions/focusTrap';
 	import type { Chore, PersonId } from '$lib/types';
 
 	interface Props {
@@ -51,6 +53,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="chores-title"
+		use:trapFocus
 		transition:fade={{ duration: 180 }}
 	>
 		<button
@@ -84,8 +87,8 @@
 						<section>
 							<div class="mb-2 flex items-center gap-2">
 								<span
-									class="grid size-5 place-items-center rounded-full text-[10px] font-bold text-white"
-									style={`background-color: ${group.person.color};`}
+									class="grid size-5 place-items-center rounded-full text-[10px] font-bold"
+									style={`background-color: ${group.person.color}; color: ${getContrastText(group.person.color)};`}
 								>
 									{group.person.initial}
 								</span>

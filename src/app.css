@@ -129,6 +129,22 @@
 	button {
 		touch-action: manipulation;
 	}
+
+	/* Respect the OS "reduce motion" setting: neutralise transitions and
+	   animations everywhere (dialog fly/fade, skeleton pulse, active:scale,
+	   KidView flip, transition-* utilities). Stylesheet !important overrides
+	   the inline animation styles Svelte transitions emit. Confetti and the
+	   fc-today-pulse ring are already gated in JS/CSS respectively. */
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+			scroll-behavior: auto !important;
+		}
+	}
 }
 
 /* ------------------------------------------------------------------ */

@@ -2,6 +2,8 @@
 	import { fade, fly } from 'svelte/transition';
 	import { X } from '@lucide/svelte';
 	import { FAMILY_MEMBERS } from '$lib/constants/persons';
+	import { getContrastText } from '$lib/utils/colors';
+	import { trapFocus } from '$lib/actions/focusTrap';
 	import { toDateInput } from '$lib/utils/datetime';
 	import type { NewChoreData } from '$lib/stores/chores';
 	import type { Chore, PersonId } from '$lib/types';
@@ -76,6 +78,8 @@
 		class="fixed inset-0 z-50 flex flex-col bg-bg text-text"
 		role="dialog"
 		aria-modal="true"
+		aria-labelledby="chore-modal-title"
+		use:trapFocus
 		in:fly={{ y: 24, duration: 220 }}
 		out:fade={{ duration: 160 }}
 	>
@@ -89,7 +93,7 @@
 			>
 				<X size={20} aria-hidden="true" />
 			</button>
-			<h2 class="flex-1 text-center text-base font-bold">
+			<h2 id="chore-modal-title" class="flex-1 text-center text-base font-bold">
 				{isEditing ? 'Aufgabe bearbeiten' : 'Neue Aufgabe'}
 			</h2>
 			<span class="size-11" aria-hidden="true"></span>
@@ -130,7 +134,7 @@
 							class="flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-all duration-200 ease-out"
 							class:opacity-40={!active}
 							style={active
-								? `background-color: ${person.color}; border-color: ${person.color}; color: white;`
+								? `background-color: ${person.color}; border-color: ${person.color}; color: ${getContrastText(person.color)};`
 								: `border-color: ${person.color}; color: ${person.color};`}
 						>
 							{person.name}

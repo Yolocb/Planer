@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
+	import { trapFocus } from '$lib/actions/focusTrap';
 
 	interface Props {
 		open: boolean;
@@ -20,6 +21,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="scope-title"
+		use:trapFocus
 		transition:fade={{ duration: 160 }}
 	>
 		<div

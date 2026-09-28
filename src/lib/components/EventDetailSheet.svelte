@@ -2,9 +2,10 @@
 	import { fade, fly } from 'svelte/transition';
 	import { PERSON_BY_ID } from '$lib/constants/persons';
 	import { getCategoryMeta } from '$lib/constants/categories';
-	import { getEventDisplayColor, isGradient } from '$lib/utils/colors';
+	import { getContrastText, getEventDisplayColor, isGradient } from '$lib/utils/colors';
 	import { formatEventRange } from '$lib/utils/datetime';
 	import { describeRecurrence } from '$lib/utils/recurrence';
+	import { trapFocus } from '$lib/actions/focusTrap';
 	import type { CalendarEvent, EventOwnerId, ReminderMinutes } from '$lib/types';
 
 	interface Props {
@@ -36,6 +37,7 @@
 	};
 
 	const headerColor = $derived(event ? getEventDisplayColor(event) : '#ccc');
+	const headerText = $derived(getContrastText(headerColor));
 	const owners = $derived(
 		(event?.personIds ?? []).map((id) => PERSON_BY_ID[id as EventOwnerId]).filter(Boolean)
 	);
@@ -49,6 +51,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="detail-title"
+		use:trapFocus
 		transition:fade={{ duration: 180 }}
 	>
 		<!-- Click-away backdrop -->
@@ -66,14 +69,16 @@
 		>
 			<!-- Coloured header -->
 			<div
-				class="rounded-t-3xl px-5 pb-4 pt-5 text-white"
-				style={isGradient(headerColor)
-					? `background: ${headerColor};`
-					: `background-color: ${headerColor};`}
+				class="rounded-t-3xl px-5 pb-4 pt-5"
+				style={`color: ${headerText}; ${
+					isGradient(headerColor)
+						? `background: ${headerColor};`
+						: `background-color: ${headerColor};`
+				}`}
 			>
 				<div class="mx-auto mb-3 h-1 w-10 rounded-full bg-white/50"></div>
 				<h2 id="detail-title" class="text-lg font-bold leading-tight">{event.title}</h2>
-				<p class="mt-1 text-sm text-white/90">
+				<p class="mt-1 text-sm" style="opacity: 0.85">
 					{formatEventRange(event.start, event.end, event.allDay, timeFormat)}
 				</p>
 			</div>
@@ -83,8 +88,8 @@
 				<div class="flex flex-wrap items-center gap-2">
 					{#each owners as person (person.id)}
 						<span
-							class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-white"
-							style={`background-color: ${person.color};`}
+							class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+							style={`background-color: ${person.color}; color: ${getContrastText(person.color)};`}
 						>
 							<span
 								class="grid size-4 place-items-center rounded-full bg-white/30 text-[9px] font-bold"

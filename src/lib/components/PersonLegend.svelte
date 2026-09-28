@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { PERSONS } from '$lib/constants/persons';
+	import { getContrastText } from '$lib/utils/colors';
 </script>
 
 <!-- Read-only colour key. There is no per-person filtering: everyone always
@@ -18,8 +19,8 @@
 			style={`background-color: color-mix(in srgb, ${person.color} 15%, var(--color-surface)); color: var(--color-text);`}
 		>
 			<span
-				class="grid size-6 place-items-center rounded-full text-[10px] font-bold text-white"
-				style={`background-color: ${person.color};`}
+				class="grid size-6 place-items-center rounded-full text-[10px] font-bold"
+				style={`background-color: ${person.color}; color: ${getContrastText(person.color)};`}
 			>
 				{person.initial}
 			</span>

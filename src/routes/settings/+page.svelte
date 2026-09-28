@@ -10,6 +10,7 @@
 	import { eventsToIcs, icsToNewEvents } from '$lib/utils/ical';
 	import { buildBackup, parseBackup } from '$lib/utils/backup';
 	import Segmented from '$lib/components/Segmented.svelte';
+	import { trapFocus } from '$lib/actions/focusTrap';
 	import type { PaletteSetting, ThemeSetting, CalendarViewId } from '$lib/types';
 
 	// Prevent demo chores from re-seeding after an explicit clear / restore.
@@ -334,6 +335,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="confirm-text"
+		use:trapFocus
 	>
 		<div class="w-full max-w-sm rounded-2xl bg-surface p-5 text-text shadow-2xl">
 			<p id="confirm-text" class="text-sm">{confirming.text}</p>

@@ -6,7 +6,12 @@
 	import { events } from '$lib/stores/events';
 	import { settings } from '$lib/stores/settings';
 	import { expandRecurrences } from '$lib/utils/recurrence';
-	import { getEventDisplayColor, isGradient } from '$lib/utils/colors';
+	import {
+		getContrastText,
+		getEventDisplayColor,
+		getPersonColor,
+		isGradient
+	} from '$lib/utils/colors';
 	import { weekdayName } from '$lib/utils/datetime';
 	import { celebrate } from '$lib/utils/confetti';
 	import { getCategoryMeta } from '$lib/constants/categories';
@@ -90,8 +95,10 @@
 				{#each todaysEvents as e (e.id)}
 					{@const color = getEventDisplayColor(e)}
 					<div
-						class="flex items-center gap-3 rounded-2xl px-4 py-3 text-white shadow-sm"
-						style={isGradient(color) ? `background: ${color};` : `background-color: ${color};`}
+						class="flex items-center gap-3 rounded-2xl px-4 py-3 shadow-sm"
+						style={`color: ${getContrastText(color)}; ${
+							isGradient(color) ? `background: ${color};` : `background-color: ${color};`
+						}`}
 					>
 						<span class="text-lg font-bold tabular-nums">{eventTime(e)}</span>
 						<span class="min-w-0 flex-1 truncate text-base font-semibold">{e.title}</span>
@@ -129,8 +136,9 @@
 					>
 						<span
 							class="grid size-8 shrink-0 place-items-center rounded-full border-2 text-lg font-bold transition-colors {c.completed
-								? 'border-feli bg-feli text-white'
+								? 'border-feli bg-feli'
 								: 'border-black/20 text-transparent dark:border-white/25'}"
+							style={c.completed ? `color: ${getContrastText(getPersonColor('feli'))};` : ''}
 							aria-hidden="true"
 						>
 							✓

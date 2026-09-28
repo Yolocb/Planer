@@ -30,6 +30,33 @@ export function isGradient(color: string): boolean {
 	return color.includes('gradient');
 }
 
+/** Relative luminance (WCAG 2.x) of an `#rrggbb` colour. */
+function luminance(hex: string): number {
+	const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex.trim());
+	if (!m) return 0;
+	const channel = (v: number) => {
+		const s = v / 255;
+		return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+	};
+	const r = channel(parseInt(m[1], 16));
+	const g = channel(parseInt(m[2], 16));
+	const b = channel(parseInt(m[3], 16));
+	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Readable text colour for text sitting on a solid tint. Picks dark or white by
+ * whichever gives more contrast (WCAG). Gradients are ambiguous, so keep white.
+ */
+export function getContrastText(color: string): string {
+	if (isGradient(color)) return 'white';
+	const L = luminance(color);
+	// Contrast vs white (L=1) vs black (L=0); pick the higher ratio.
+	const contrastWhite = 1.05 / (L + 0.05);
+	const contrastDark = (L + 0.05) / 0.05;
+	return contrastDark >= contrastWhite ? '#1a1a1a' : 'white';
+}
+
 /** Resolve the display colour for an event, honouring an explicit override. */
 export function getEventDisplayColor(event: Pick<CalendarEvent, 'personIds' | 'color'>): string {
 	return event.color ?? getEventColor(event.personIds);
