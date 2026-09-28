@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
+	import { resolve } from '$app/paths';
 	import CalendarView from '$lib/components/CalendarView.svelte';
 	import type { FcViewId } from '$lib/components/CalendarView.svelte';
 	import PersonLegend from '$lib/components/PersonLegend.svelte';
@@ -245,6 +246,13 @@
 				>
 					<span aria-hidden="true">✅</span> Aufgaben
 				</button>
+				<a
+					href={resolve('/settings')}
+					aria-label="Einstellungen"
+					class="grid min-h-9 min-w-9 place-items-center rounded-full bg-black/5 text-base hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15"
+				>
+					<span aria-hidden="true">⚙️</span>
+				</a>
 			</div>
 		</div>
 		{#if !kidMode}

@@ -53,7 +53,8 @@ Pushing to `main` runs `.github/workflows/deploy.yml`, which builds with
   when a stale `activeFilters` was persisted ✅
 - **Sprint 4** — Feli's child "Heute" view, whole-family chores, dependency-free
   confetti (respects `prefers-reduced-motion`) ✅
-- Sprint 5 — import/export & settings page
+- **Sprint 5** — Settings page (theme, palette, calendar preferences), `.ics`
+  import/export, and full JSON backup/restore of events + chores ✅
 - Sprint 6 — polish, performance, PWA finalisation
 
 ## Backlog
