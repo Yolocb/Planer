@@ -11,6 +11,9 @@ node_modules
 # Smoke-test screenshot artifacts
 scripts/__screens__
 
+# Bundle analyzer output (npm run build:analyze)
+stats.html
+
 # OS
 .DS_Store
 Thumbs.db

@@ -14,15 +14,8 @@
 		LocateFixed,
 		Plus
 	} from '@lucide/svelte';
-	import CalendarView from '$lib/components/CalendarView.svelte';
 	import type { FcViewId } from '$lib/components/CalendarView.svelte';
 	import PersonLegend from '$lib/components/PersonLegend.svelte';
-	import EventModal from '$lib/components/EventModal.svelte';
-	import EventDetailSheet from '$lib/components/EventDetailSheet.svelte';
-	import RecurrenceScopeDialog from '$lib/components/RecurrenceScopeDialog.svelte';
-	import KidView from '$lib/components/KidView.svelte';
-	import ChoreModal from '$lib/components/ChoreModal.svelte';
-	import ChoresSheet from '$lib/components/ChoresSheet.svelte';
 	import ThemeSwitcher from '$lib/components/ThemeSwitcher.svelte';
 	import {
 		events,
@@ -67,6 +60,58 @@
 	);
 
 	const fcView = $derived(VIEW_MAP[currentTab] ?? 'timeGridWeek');
+
+	// --- Lazy-loaded components: kept off the initial parse path. Each is loaded
+	// on first use and cached; onMount also prefetches them on idle so the first
+	// open is instant while the initial bundle stays small. The types come from
+	// each module's default export (the Svelte 5 functional component type), so
+	// props and bindings stay fully checked at the render sites below. ---
+	type CalendarViewType = (typeof import('$lib/components/CalendarView.svelte'))['default'];
+	type EventModalType = (typeof import('$lib/components/EventModal.svelte'))['default'];
+	type EventDetailSheetType = (typeof import('$lib/components/EventDetailSheet.svelte'))['default'];
+	type RecurrenceScopeDialogType =
+		(typeof import('$lib/components/RecurrenceScopeDialog.svelte'))['default'];
+	type ChoresSheetType = (typeof import('$lib/components/ChoresSheet.svelte'))['default'];
+	type ChoreModalType = (typeof import('$lib/components/ChoreModal.svelte'))['default'];
+	type KidViewType = (typeof import('$lib/components/KidView.svelte'))['default'];
+
+	let CalendarViewComp = $state<CalendarViewType | null>(null);
+	let EventModalComp = $state<EventModalType | null>(null);
+	let EventDetailSheetComp = $state<EventDetailSheetType | null>(null);
+	let RecurrenceScopeDialogComp = $state<RecurrenceScopeDialogType | null>(null);
+	let ChoresSheetComp = $state<ChoresSheetType | null>(null);
+	let ChoreModalComp = $state<ChoreModalType | null>(null);
+	let KidViewComp = $state<KidViewType | null>(null);
+
+	async function loadEventModal() {
+		if (!EventModalComp)
+			EventModalComp = (await import('$lib/components/EventModal.svelte')).default;
+	}
+	async function loadDetailSheet() {
+		if (!EventDetailSheetComp)
+			EventDetailSheetComp = (await import('$lib/components/EventDetailSheet.svelte')).default;
+	}
+	async function loadScopeDialog() {
+		if (!RecurrenceScopeDialogComp)
+			RecurrenceScopeDialogComp = (await import('$lib/components/RecurrenceScopeDialog.svelte'))
+				.default;
+	}
+	async function loadChoresSheet() {
+		if (!ChoresSheetComp)
+			ChoresSheetComp = (await import('$lib/components/ChoresSheet.svelte')).default;
+	}
+	async function loadChoreModal() {
+		if (!ChoreModalComp)
+			ChoreModalComp = (await import('$lib/components/ChoreModal.svelte')).default;
+	}
+	async function loadKidView() {
+		if (!KidViewComp) KidViewComp = (await import('$lib/components/KidView.svelte')).default;
+	}
+
+	async function openKidView() {
+		await loadKidView();
+		kidMode = true;
+	}
 
 	// Swipe navigation (mobile): horizontal drag → prev/next.
 	let touchStartX = 0;
@@ -116,13 +161,15 @@
 		return get(events).find((e) => e.id === id) ?? null;
 	}
 
-	function handleEventClick(event: CalendarEvent) {
+	async function handleEventClick(event: CalendarEvent) {
+		await loadDetailSheet();
 		detailEvent = event;
 		detailMaster = isOccurrenceId(event.id) ? findMaster(masterIdOf(event.id)) : null;
 		detailOpen = true;
 	}
 
-	function handleSlotSelect(sel: { start: Date; end: Date; allDay: boolean }) {
+	async function handleSlotSelect(sel: { start: Date; end: Date; allDay: boolean }) {
+		await loadEventModal();
 		modalEvent = null;
 		editCtx = null;
 		modalInitial = {
@@ -133,16 +180,18 @@
 		modalOpen = true;
 	}
 
-	function openAddEvent() {
+	async function openAddEvent() {
+		await loadEventModal();
 		modalEvent = null;
 		editCtx = null;
 		modalInitial = null; // modal defaults to the next full hour
 		modalOpen = true;
 	}
 
-	function startEdit() {
+	async function startEdit() {
 		const raw = detailEvent;
 		if (!raw) return;
+		await loadEventModal();
 		detailOpen = false;
 		if (isOccurrenceId(raw.id)) {
 			const master = findMaster(masterIdOf(raw.id));
@@ -161,6 +210,7 @@
 		const raw = detailEvent;
 		if (!raw) return;
 		if (isOccurrenceId(raw.id)) {
+			await loadScopeDialog();
 			scopeCtx = {
 				master: findMaster(masterIdOf(raw.id)),
 				occurrenceIso: raw.start,
@@ -180,6 +230,7 @@
 		if (!modalEvent) {
 			await createEvent(data);
 		} else if (editCtx?.master) {
+			await loadScopeDialog();
 			scopeCtx = { master: editCtx.master, occurrenceIso: editCtx.occurrenceIso, payload: data };
 			scopeMode = 'edit';
 			scopeOpen = true;
@@ -229,17 +280,20 @@
 	let choreModalOpen = $state(false);
 	let choreEdit = $state<Chore | null>(null);
 
-	function openChores() {
+	async function openChores() {
+		await loadChoresSheet();
 		kidMode = false;
 		choresOpen = true;
 	}
 
-	function addChore() {
+	async function addChore() {
+		await loadChoreModal();
 		choreEdit = null;
 		choreModalOpen = true;
 	}
 
-	function editChore(chore: Chore) {
+	async function editChore(chore: Chore) {
+		await loadChoreModal();
 		choreEdit = chore;
 		choresOpen = false;
 		choreModalOpen = true;
@@ -254,6 +308,22 @@
 	onMount(() => {
 		loadEvents();
 		loadChores();
+		// Calendar is the default view — load it right away (skeleton covers the gap).
+		import('$lib/components/CalendarView.svelte').then((m) => (CalendarViewComp = m.default));
+		// Warm the on-demand chunks once the main thread is idle, so the first
+		// open of any modal / kid view is instant without bloating initial parse.
+		const prefetch = () => {
+			loadEventModal();
+			loadDetailSheet();
+			loadScopeDialog();
+			loadChoresSheet();
+			loadChoreModal();
+			loadKidView();
+		};
+		const ric = (window as unknown as { requestIdleCallback?: (cb: () => void) => void })
+			.requestIdleCallback;
+		if (ric) ric(prefetch);
+		else setTimeout(prefetch, 1500);
 	});
 </script>
 
@@ -320,29 +390,33 @@
 	>
 		{#if kidMode}
 			<div class="h-full" in:fade={{ duration: 150 }}>
-				<KidView />
+				{#if KidViewComp}
+					<KidViewComp />
+				{/if}
 			</div>
 		{:else}
-			{#if !$eventsLoaded}
+			{#if !$eventsLoaded || !CalendarViewComp}
 				<div class="absolute inset-2 z-10 flex flex-col gap-2" aria-hidden="true">
 					<div class="skeleton h-9 w-full"></div>
 					<div class="skeleton h-6 w-2/3"></div>
 					<div class="skeleton flex-1 w-full"></div>
 				</div>
 			{/if}
-			<div class="h-full" in:fade={{ duration: 150 }}>
-				<CalendarView
-					view={fcView}
-					events={$filteredEvents}
-					weekStartsOn={$settings.weekStartsOn}
-					timeFormat={$settings.timeFormat}
-					onEventClick={handleEventClick}
-					onSlotSelect={handleSlotSelect}
-					onEventDrop={handleEventDrop}
-					onRangeChange={(t) => (rangeTitle = t)}
-					bind:api={calApi}
-				/>
-			</div>
+			{#if CalendarViewComp}
+				<div class="h-full" in:fade={{ duration: 150 }}>
+					<CalendarViewComp
+						view={fcView}
+						events={$filteredEvents}
+						weekStartsOn={$settings.weekStartsOn}
+						timeFormat={$settings.timeFormat}
+						onEventClick={handleEventClick}
+						onSlotSelect={handleSlotSelect}
+						onEventDrop={handleEventDrop}
+						onRangeChange={(t) => (rangeTitle = t)}
+						bind:api={calApi}
+					/>
+				</div>
+			{/if}
 		{/if}
 	</main>
 
@@ -399,7 +473,7 @@
 		{/each}
 		<button
 			type="button"
-			onclick={() => (kidMode = true)}
+			onclick={openKidView}
 			aria-current={kidMode ? 'page' : undefined}
 			class="flex min-h-14 flex-1 flex-col items-center justify-center gap-1 py-2 text-xs transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-feli focus-visible:ring-inset {kidMode
 				? 'font-semibold text-feli'
@@ -418,45 +492,55 @@
 </div>
 
 <!-- Add / edit form -->
-<EventModal
-	open={modalOpen}
-	event={modalEvent}
-	initial={modalInitial}
-	onClose={() => (modalOpen = false)}
-	onSave={handleSave}
-/>
+{#if EventModalComp}
+	<EventModalComp
+		open={modalOpen}
+		event={modalEvent}
+		initial={modalInitial}
+		onClose={() => (modalOpen = false)}
+		onSave={handleSave}
+	/>
+{/if}
 
 <!-- Tap-to-view detail sheet -->
-<EventDetailSheet
-	open={detailOpen}
-	event={detailEvent}
-	master={detailMaster}
-	timeFormat={$settings.timeFormat}
-	onClose={() => (detailOpen = false)}
-	onEdit={startEdit}
-	onDelete={confirmDelete}
-/>
+{#if EventDetailSheetComp}
+	<EventDetailSheetComp
+		open={detailOpen}
+		event={detailEvent}
+		master={detailMaster}
+		timeFormat={$settings.timeFormat}
+		onClose={() => (detailOpen = false)}
+		onEdit={startEdit}
+		onDelete={confirmDelete}
+	/>
+{/if}
 
 <!-- This / future / all scope picker for recurring events -->
-<RecurrenceScopeDialog
-	open={scopeOpen}
-	mode={scopeMode}
-	onChoose={handleScope}
-	onCancel={() => (scopeOpen = false)}
-/>
+{#if RecurrenceScopeDialogComp}
+	<RecurrenceScopeDialogComp
+		open={scopeOpen}
+		mode={scopeMode}
+		onChoose={handleScope}
+		onCancel={() => (scopeOpen = false)}
+	/>
+{/if}
 
 <!-- Family chores list -->
-<ChoresSheet
-	open={choresOpen}
-	onClose={() => (choresOpen = false)}
-	onAdd={addChore}
-	onEdit={editChore}
-/>
+{#if ChoresSheetComp}
+	<ChoresSheetComp
+		open={choresOpen}
+		onClose={() => (choresOpen = false)}
+		onAdd={addChore}
+		onEdit={editChore}
+	/>
+{/if}
 
 <!-- Add / edit chore -->
-<ChoreModal
-	open={choreModalOpen}
-	chore={choreEdit}
-	onClose={() => (choreModalOpen = false)}
-	onSave={saveChore}
-/>
+{#if ChoreModalComp}
+	<ChoreModalComp
+		open={choreModalOpen}
+		chore={choreEdit}
+		onClose={() => (choreModalOpen = false)}
+		onSave={saveChore}
+	/>
+{/if}

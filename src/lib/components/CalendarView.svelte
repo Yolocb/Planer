@@ -264,7 +264,7 @@
 	}
 	@media (prefers-reduced-motion: no-preference) {
 		:global(.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number) {
-			animation: fc-today-pulse 2.6s ease-out infinite;
+			animation: fc-today-pulse 2.6s ease-out 4;
 		}
 		@keyframes fc-today-pulse {
 			0% {

@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
+		"build:analyze": "cross-env ANALYZE=true vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -27,6 +28,7 @@
 		"@types/node": "^26.6.3",
 		"@vite-pwa/sveltekit": "^1.1.0",
 		"@vitest/ui": "^5.0.2",
+		"cross-env": "^10.1.0",
 		"eslint": "^10.11.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.23.0",
@@ -34,6 +36,7 @@
 		"jsdom": "^29.1.1",
 		"prettier": "^3.9.9",
 		"prettier-plugin-svelte": "^4.1.1",
+		"rollup-plugin-visualizer": "^6.0.11",
 		"svelte": "^5.56.1",
 		"svelte-check": "^4.6.0",
 		"tailwindcss": "^4.3.3",

@@ -7,6 +7,17 @@ import { defineConfig } from 'vitest/config';
 // GitHub Pages serves this project from https://<user>.github.io/Planer/
 const base = (process.env.BASE_PATH ?? '/Planer') as '' | `/${string}`;
 
+// Dev-only bundle analyzer: `npm run build:analyze` sets ANALYZE=true and emits
+// stats.html. Kept out of the normal prod build.
+const analyzePlugins = process.env.ANALYZE
+	? [
+			(await import('rollup-plugin-visualizer')).visualizer({
+				filename: 'stats.html',
+				gzipSize: true
+			})
+		]
+	: [];
+
 export default defineConfig({
 	plugins: [
 		tailwindcss(),
@@ -76,8 +87,20 @@ export default defineConfig({
 			devOptions: {
 				enabled: false
 			}
-		})
+		}),
+		...analyzePlugins
 	],
+	build: {
+		rollupOptions: {
+			output: {
+				// Keep FullCalendar (the largest dependency) in its own stable chunk so
+				// app-code deploys don't bust its long-lived cache entry.
+				manualChunks(id) {
+					if (id.includes('@fullcalendar')) return 'fullcalendar';
+				}
+			}
+		}
+	},
 	test: {
 		environment: 'jsdom',
 		include: ['tests/unit/**/*.{test,spec}.ts', 'tests/integration/**/*.{test,spec}.ts'],
