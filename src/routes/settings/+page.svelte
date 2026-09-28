@@ -157,7 +157,14 @@
 			busy = null;
 		}
 	}
+
+	/** Escape dismisses the confirm dialog (same as Abbrechen). */
+	function handleEscape(e: KeyboardEvent) {
+		if (e.key === 'Escape' && confirming) confirming = null;
+	}
 </script>
+
+<svelte:window onkeydown={handleEscape} />
 
 <div class="mx-auto flex min-h-dvh max-w-lg flex-col bg-bg text-text">
 	<!-- Header -->

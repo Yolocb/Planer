@@ -61,8 +61,12 @@ await page.screenshot({ path: SHOTS + 'week-modern-light.png' });
 await page.getByRole('button', { name: 'Termin hinzufügen' }).click();
 await page.waitForTimeout(300);
 results.fabOpensModal = (await page.getByRole('button', { name: /Termin erstellen/ }).count()) > 0;
-await page.getByRole('button', { name: 'Abbrechen' }).last().click();
-await page.waitForTimeout(250);
+
+// --- 5b. Escape closes the modal ---
+await page.keyboard.press('Escape');
+await page.waitForTimeout(300);
+results.escapeClosesModal =
+	(await page.getByRole('button', { name: /Termin erstellen/ }).count()) === 0;
 
 // --- 6. Alt palette (Feminin) + dark: still renders, capture a look ---
 await page.evaluate(() => {
@@ -83,7 +87,8 @@ process.exit(
 		results.todayStyled &&
 		results.monthSwitch &&
 		results.weekSwitch &&
-		results.fabOpensModal
+		results.fabOpensModal &&
+		results.escapeClosesModal
 		? 0
 		: 1
 );

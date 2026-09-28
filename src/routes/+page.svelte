@@ -209,6 +209,21 @@
 		await updateEvent(id, { start, end, allDay });
 	}
 
+	/**
+	 * Global Escape-to-close. Dismisses only the topmost open layer so that, e.g.,
+	 * closing the chore form (on top of the chores sheet) leaves the sheet open.
+	 */
+	function handleEscape(e: KeyboardEvent) {
+		if (e.key !== 'Escape' || e.defaultPrevented) return;
+		if (choreModalOpen) choreModalOpen = false;
+		else if (modalOpen) modalOpen = false;
+		else if (scopeOpen) scopeOpen = false;
+		else if (detailOpen) detailOpen = false;
+		else if (choresOpen) choresOpen = false;
+		else return;
+		e.preventDefault();
+	}
+
 	// --- Chores: family sheet + add/edit modal ---
 	let choresOpen = $state(false);
 	let choreModalOpen = $state(false);
@@ -241,6 +256,8 @@
 		loadChores();
 	});
 </script>
+
+<svelte:window onkeydown={handleEscape} />
 
 <div class="flex h-dvh flex-col bg-bg text-text">
 	<!-- Header: title + date-range navigation -->
