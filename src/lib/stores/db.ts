@@ -92,6 +92,21 @@ export async function clearAllData(): Promise<void> {
 	await Promise.all([db.clear('events'), db.clear('chores')]);
 }
 
+/**
+ * Replace all stored data with a backup's contents (used by Settings →
+ * "Backup wiederherstellen"). Clears both stores, then writes the given rows.
+ */
+export async function replaceAllData(events: CalendarEvent[], chores: Chore[]): Promise<void> {
+	const db = await getDB();
+	const tx = db.transaction(['events', 'chores'], 'readwrite');
+	await Promise.all([tx.objectStore('events').clear(), tx.objectStore('chores').clear()]);
+	await Promise.all([
+		...events.map((e) => tx.objectStore('events').put(e)),
+		...chores.map((c) => tx.objectStore('chores').put(c))
+	]);
+	await tx.done;
+}
+
 // -------------------------------------------------------------------------
 // Seed data
 // -------------------------------------------------------------------------

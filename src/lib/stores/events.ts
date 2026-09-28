@@ -44,6 +44,12 @@ export async function createEvent(data: NewEventData): Promise<CalendarEvent> {
 	return ev;
 }
 
+/** Bulk-create events (e.g. from an .ics import). Returns the number created. */
+export async function importEvents(list: NewEventData[]): Promise<number> {
+	for (const data of list) await createEvent(data);
+	return list.length;
+}
+
 /** Patch an existing event by id. */
 export async function updateEvent(
 	id: string,
