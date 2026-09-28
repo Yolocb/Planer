@@ -43,15 +43,23 @@ export default defineConfig({
 					{
 						src: 'icons/icon-192.png',
 						sizes: '192x192',
-						type: 'image/png'
+						type: 'image/png',
+						purpose: 'any'
 					},
 					{
 						src: 'icons/icon-512.png',
 						sizes: '512x512',
-						type: 'image/png'
+						type: 'image/png',
+						purpose: 'any'
 					},
 					{
-						src: 'icons/icon-512.png',
+						src: 'icons/icon-192-maskable.png',
+						sizes: '192x192',
+						type: 'image/png',
+						purpose: 'maskable'
+					},
+					{
+						src: 'icons/icon-512-maskable.png',
 						sizes: '512x512',
 						type: 'image/png',
 						purpose: 'maskable'
@@ -59,7 +67,11 @@ export default defineConfig({
 				]
 			},
 			workbox: {
-				globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,ico,woff2}']
+				globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,ico,woff2}'],
+				// SPA offline routing: unmatched navigations fall back to the cached
+				// app-shell entry (adapter-static emits 404.html; the deploy also
+				// copies it to index.html for the root 200).
+				navigateFallback: `${base}/`
 			},
 			devOptions: {
 				enabled: false

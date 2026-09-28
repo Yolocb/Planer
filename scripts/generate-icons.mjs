@@ -1,5 +1,12 @@
 // Generates placeholder PWA icons (no external deps) — a simple white
 // calendar motif on the FamilyCal blue (#4A90D9). Run: node scripts/generate-icons.mjs
+//
+// Emits, into static/icons/:
+//   icon-192.png / icon-512.png        — purpose "any" (full-bleed motif)
+//   icon-180.png                       — apple-touch-icon (opaque; iOS ignores alpha)
+//   icon-192-maskable.png / 512        — purpose "maskable" (motif shrunk into the
+//                                        central safe zone so Android adaptive masks
+//                                        never clip the calendar)
 import { deflateSync } from 'node:zlib';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -30,7 +37,12 @@ function chunk(type, data) {
 	return Buffer.concat([len, body, crc]);
 }
 
-function drawIcon(size) {
+/**
+ * @param {number} size    output edge length in px
+ * @param {number} scale    fraction of the canvas the motif occupies (1 = full-bleed
+ *                          "any" icon; ~0.8 leaves a maskable safe-zone margin).
+ */
+function drawIcon(size, scale = 1) {
 	const px = (x, y, rgb) => {
 		const o = y * size * 3 + x * 3;
 		raw[o] = rgb[0];
@@ -38,43 +50,42 @@ function drawIcon(size) {
 		raw[o + 2] = rgb[2];
 	};
 	const raw = Buffer.alloc(size * size * 3);
-	// Background.
+	// Background: always full-bleed blue (maskable-safe; masks only trim the blue).
 	for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) px(x, y, BLUE);
 
-	// White calendar body with a header band + grid dots.
-	const m = Math.round(size * 0.2); // margin
-	const bodyTop = Math.round(size * 0.28);
+	// Motif drawn inside a centred D×D box; scale<1 insets it into the safe zone.
+	const D = Math.round(size * scale);
+	const off = Math.round((size - D) / 2);
+	const R = (k) => Math.round(D * k); // scaled length
 	const rect = (x0, y0, x1, y1, rgb) => {
 		for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) px(x, y, rgb);
 	};
-	rect(m, bodyTop, size - m, size - m, WHITE);
+
+	// White calendar body with a header band + grid dots.
+	const bl = off + R(0.2); // body left
+	const br = off + D - R(0.2); // body right
+	const bt = off + R(0.28); // body top
+	const bb = off + D - R(0.2); // body bottom
+	rect(bl, bt, br, bb, WHITE);
 	// Header band.
-	const bandH = Math.round(size * 0.12);
-	rect(m, bodyTop, size - m, bodyTop + bandH, BLUE);
+	const bandH = R(0.12);
+	rect(bl, bt, br, bt + bandH, BLUE);
 	// Two hanging rings.
-	const ringW = Math.round(size * 0.03);
-	rect(
-		m + Math.round(size * 0.12),
-		bodyTop - Math.round(size * 0.06),
-		m + Math.round(size * 0.12) + ringW,
-		bodyTop + Math.round(size * 0.02),
-		WHITE
-	);
-	rect(
-		size - m - Math.round(size * 0.12) - ringW,
-		bodyTop - Math.round(size * 0.06),
-		size - m - Math.round(size * 0.12),
-		bodyTop + Math.round(size * 0.02),
-		WHITE
-	);
+	const ringW = R(0.03);
+	const ringInset = R(0.12);
+	const ringTop = bt - R(0.06);
+	const ringBot = bt + R(0.02);
+	rect(bl + ringInset, ringTop, bl + ringInset + ringW, ringBot, WHITE);
+	rect(br - ringInset - ringW, ringTop, br - ringInset, ringBot, WHITE);
 	// A 3x2 grid of blue dots on the white body.
-	const gridTop = bodyTop + bandH + Math.round(size * 0.06);
-	const dot = Math.round(size * 0.06);
-	const stepX = Math.round((size - 2 * m - dot) / 3);
-	const stepY = Math.round(size * 0.14);
+	const gridTop = bt + bandH + R(0.06);
+	const dot = R(0.06);
+	const gridLeft = bl + R(0.04);
+	const stepX = Math.round((br - bl - dot) / 3);
+	const stepY = R(0.14);
 	for (let r = 0; r < 2; r++)
 		for (let c = 0; c < 3; c++) {
-			const x0 = m + Math.round(size * 0.04) + c * stepX;
+			const x0 = gridLeft + c * stepX;
 			const y0 = gridTop + r * stepY;
 			rect(x0, y0, x0 + dot, y0 + dot, BLUE);
 		}
@@ -100,8 +111,16 @@ function drawIcon(size) {
 	return png;
 }
 
-for (const size of [192, 512]) {
-	const file = join(OUT_DIR, `icon-${size}.png`);
-	writeFileSync(file, drawIcon(size));
+const ICONS = [
+	{ name: 'icon-192.png', size: 192 },
+	{ name: 'icon-512.png', size: 512 },
+	{ name: 'icon-180.png', size: 180 }, // apple-touch-icon
+	{ name: 'icon-192-maskable.png', size: 192, scale: 0.8 },
+	{ name: 'icon-512-maskable.png', size: 512, scale: 0.8 }
+];
+
+for (const { name, size, scale } of ICONS) {
+	const file = join(OUT_DIR, name);
+	writeFileSync(file, drawIcon(size, scale ?? 1));
 	console.log('wrote', file);
 }
