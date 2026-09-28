@@ -8,6 +8,9 @@ node_modules
 /.svelte-kit
 /build
 
+# Smoke-test screenshot artifacts
+scripts/__screens__
+
 # OS
 .DS_Store
 Thumbs.db

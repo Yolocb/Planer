@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { fade, fly } from 'svelte/transition';
 	import { PERSON_BY_ID } from '$lib/constants/persons';
 	import { getCategoryMeta } from '$lib/constants/categories';
 	import { getEventDisplayColor, isGradient } from '$lib/utils/colors';
@@ -48,6 +49,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="detail-title"
+		transition:fade={{ duration: 180 }}
 	>
 		<!-- Click-away backdrop -->
 		<button
@@ -59,6 +61,8 @@
 
 		<div
 			class="relative z-10 w-full max-w-lg rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-2xl sm:mb-6 sm:rounded-3xl"
+			in:fly={{ y: 320, duration: 260 }}
+			out:fly={{ y: 320, duration: 200 }}
 		>
 			<!-- Coloured header -->
 			<div

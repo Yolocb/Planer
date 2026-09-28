@@ -3,19 +3,24 @@
 </script>
 
 <!-- Read-only colour key. There is no per-person filtering: everyone always
-     sees all entries; this bar just maps each colour to a family member. -->
+     sees all entries; this bar just maps each colour to a family member.
+     Soft-tint pills + a solid colour badge — mirrors the event-pill styling. -->
 <div
-	class="flex gap-2 overflow-x-auto border-b border-black/5 bg-surface px-3 py-2 dark:border-white/10"
+	class="flex gap-2 overflow-x-auto px-3 py-2"
+	style="border-bottom: 1px solid var(--hairline);"
 	role="list"
 	aria-label="Familienmitglieder"
 >
 	{#each PERSONS as person (person.id)}
 		<span
 			role="listitem"
-			class="flex min-h-9 flex-shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium text-white"
-			style={`background-color: ${person.color};`}
+			class="flex min-h-9 flex-shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-medium"
+			style={`background-color: color-mix(in srgb, ${person.color} 15%, var(--color-surface)); color: var(--color-text);`}
 		>
-			<span class="grid size-4 place-items-center rounded-full bg-white/30 text-[9px] font-bold">
+			<span
+				class="grid size-6 place-items-center rounded-full text-[10px] font-bold text-white"
+				style={`background-color: ${person.color};`}
+			>
 				{person.initial}
 			</span>
 			{person.name}

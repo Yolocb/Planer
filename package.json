@@ -49,6 +49,7 @@
 		"@fullcalendar/interaction": "^6.1.21",
 		"@fullcalendar/list": "^6.1.21",
 		"@fullcalendar/timegrid": "^6.1.21",
+		"@lucide/svelte": "^1.48.0",
 		"ical.js": "^2.2.1",
 		"ics": "^3.12.0",
 		"idb": "^8.0.3"

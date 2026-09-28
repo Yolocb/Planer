@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fade, fly } from 'svelte/transition';
+	import { X } from '@lucide/svelte';
 	import { FAMILY_MEMBERS } from '$lib/constants/persons';
 	import { toDateInput } from '$lib/utils/datetime';
 	import type { NewChoreData } from '$lib/stores/chores';
@@ -70,23 +72,27 @@
 </script>
 
 {#if open}
-	<div class="fixed inset-0 z-50 flex flex-col bg-bg text-text" role="dialog" aria-modal="true">
+	<div
+		class="fixed inset-0 z-50 flex flex-col bg-bg text-text"
+		role="dialog"
+		aria-modal="true"
+		in:fly={{ y: 24, duration: 220 }}
+		out:fade={{ duration: 160 }}
+	>
 		<!-- Header: close + centered title -->
-		<header
-			class="flex items-center gap-2 border-b border-black/5 bg-surface px-3 py-3 dark:border-white/10"
-		>
+		<header class="panel flex items-center gap-2 rounded-none border-x-0 border-t-0 px-3 py-3">
 			<button
 				type="button"
 				aria-label="Abbrechen"
-				class="grid size-9 place-items-center rounded-full text-lg opacity-70 hover:bg-black/5 dark:hover:bg-white/10"
+				class="grid size-11 place-items-center rounded-full opacity-70 transition-all duration-200 ease-out hover:bg-black/5 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:hover:bg-white/10"
 				onclick={onClose}
 			>
-				✕
+				<X size={20} aria-hidden="true" />
 			</button>
 			<h2 class="flex-1 text-center text-base font-bold">
 				{isEditing ? 'Aufgabe bearbeiten' : 'Neue Aufgabe'}
 			</h2>
-			<span class="size-9" aria-hidden="true"></span>
+			<span class="size-11" aria-hidden="true"></span>
 		</header>
 
 		<div class="flex-1 space-y-5 overflow-y-auto px-4 py-4">
@@ -121,7 +127,7 @@
 							type="button"
 							onclick={() => (personId = person.id as PersonId)}
 							aria-pressed={active}
-							class="flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium"
+							class="flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-all duration-200 ease-out"
 							class:opacity-40={!active}
 							style={active
 								? `background-color: ${person.color}; border-color: ${person.color}; color: white;`
@@ -145,16 +151,16 @@
 			</div>
 
 			{#if isEditing}
-				<label class="flex items-center justify-between">
+				<label class="flex min-h-11 items-center justify-between">
 					<span class="text-sm font-medium">Erledigt</span>
-					<input type="checkbox" bind:checked={done} class="size-5 accent-[var(--color-feli)]" />
+					<input type="checkbox" bind:checked={done} class="size-6 accent-[var(--color-feli)]" />
 				</label>
 			{/if}
 		</div>
 
 		<!-- Action bar -->
 		<footer
-			class="flex gap-2 border-t border-black/5 bg-surface px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] dark:border-white/10"
+			class="panel flex gap-2 rounded-none border-x-0 border-b-0 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
 		>
 			<button type="button" class="btn btn-secondary" onclick={onClose}>Abbrechen</button>
 			<button type="button" class="btn btn-primary btn-lg flex-1" onclick={save}>

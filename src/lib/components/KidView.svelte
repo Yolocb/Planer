@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { get } from 'svelte/store';
+	import { flip } from 'svelte/animate';
+	import { CalendarDays, ListChecks, PartyPopper } from '@lucide/svelte';
 	import { chores, toggleChore, dueChores, todayIso } from '$lib/stores/chores';
 	import { events } from '$lib/stores/events';
 	import { settings } from '$lib/stores/settings';
@@ -8,6 +10,7 @@
 	import { weekdayName } from '$lib/utils/datetime';
 	import { celebrate } from '$lib/utils/confetti';
 	import { getCategoryMeta } from '$lib/constants/categories';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import type { CalendarEvent } from '$lib/types';
 
 	const KID = 'feli' as const;
@@ -80,7 +83,9 @@
 	<!-- Today's events -->
 	{#if todaysEvents.length}
 		<section>
-			<h3 class="mb-2 text-sm font-bold opacity-70">Heute</h3>
+			<h3 class="mb-2 flex items-center gap-1.5 text-sm font-bold opacity-70">
+				<CalendarDays size={16} aria-hidden="true" /> Heute
+			</h3>
 			<div class="space-y-2">
 				{#each todaysEvents as e (e.id)}
 					{@const color = getEventDisplayColor(e)}
@@ -101,16 +106,23 @@
 
 	<!-- Chores -->
 	<section>
-		<h3 class="mb-2 text-sm font-bold opacity-70">Meine Aufgaben</h3>
+		<h3 class="mb-2 flex items-center gap-1.5 text-sm font-bold opacity-70">
+			<ListChecks size={16} aria-hidden="true" /> Meine Aufgaben
+		</h3>
 		{#if total === 0}
-			<p class="rounded-2xl bg-surface px-4 py-6 text-center text-sm opacity-60 shadow-sm">
-				Heute keine Aufgaben. 🎈
-			</p>
+			<div class="rounded-2xl bg-surface shadow-sm">
+				<EmptyState
+					icon={PartyPopper}
+					title="Heute keine Aufgaben! 🎈"
+					subtitle="Alles frei — genieß deinen Tag!"
+				/>
+			</div>
 		{:else}
 			<div class="space-y-2">
 				{#each todaysChores as c (c.id)}
 					<button
 						type="button"
+						animate:flip={{ duration: 300 }}
 						onclick={() => onToggle(c.id)}
 						aria-pressed={c.completed}
 						class="flex w-full items-center gap-3 rounded-2xl bg-surface px-4 py-4 text-left shadow-sm transition-transform active:scale-[0.98]"

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
+	import { ChevronLeft } from '@lucide/svelte';
 	import { settings } from '$lib/stores/settings';
 	import { loadEvents, importEvents } from '$lib/stores/events';
 	import { loadChores } from '$lib/stores/chores';
@@ -8,6 +9,7 @@
 	import { downloadText, pickTextFile } from '$lib/utils/file';
 	import { eventsToIcs, icsToNewEvents } from '$lib/utils/ical';
 	import { buildBackup, parseBackup } from '$lib/utils/backup';
+	import Segmented from '$lib/components/Segmented.svelte';
 	import type { PaletteSetting, ThemeSetting, CalendarViewId } from '$lib/types';
 
 	// Prevent demo chores from re-seeding after an explicit clear / restore.
@@ -56,6 +58,12 @@
 	/** Pending confirmation (restore / clear) rendered as an inline dialog. */
 	let confirming = $state<{ text: string; run: () => Promise<void> } | null>(null);
 
+	/** Label of the in-progress data operation, or null. Drives the skeleton. */
+	let busy = $state<string | null>(null);
+
+	/** Yield one frame so the skeleton paints before a blocking parse runs. */
+	const nextFrame = () => new Promise((r) => setTimeout(r, 0));
+
 	onMount(() => {
 		// Populate the in-memory stores so a later "back" shows fresh data.
 		loadEvents();
@@ -77,12 +85,16 @@
 		try {
 			const file = await pickTextFile('.ics,text/calendar');
 			if (!file) return;
+			busy = 'Termine werden importiert …';
+			await nextFrame();
 			const newEvents = icsToNewEvents(file.text, 'family');
 			if (newEvents.length === 0) return flash('error', 'Keine Termine in der Datei gefunden.');
 			const n = await importEvents(newEvents);
 			flash('ok', `${n} Termine importiert.`);
 		} catch (err) {
 			flash('error', `Import fehlgeschlagen: ${(err as Error).message}`);
+		} finally {
+			busy = null;
 		}
 	}
 
@@ -100,6 +112,8 @@
 		try {
 			const file = await pickTextFile('.json,application/json');
 			if (!file) return;
+			busy = 'Backup wird gelesen …';
+			await nextFrame();
 			const { events, chores } = parseBackup(file.text);
 			confirming = {
 				text: `Backup wiederherstellen? Alle aktuellen Daten werden durch ${events.length} Termine und ${chores.length} Aufgaben ersetzt.`,
@@ -112,6 +126,8 @@
 			};
 		} catch (err) {
 			flash('error', `Backup ungültig: ${(err as Error).message}`);
+		} finally {
+			busy = null;
 		}
 	}
 
@@ -131,10 +147,14 @@
 		const action = confirming;
 		confirming = null;
 		if (!action) return;
+		busy = 'Einen Moment …';
+		await nextFrame();
 		try {
 			await action.run();
 		} catch (err) {
 			flash('error', `Fehlgeschlagen: ${(err as Error).message}`);
+		} finally {
+			busy = null;
 		}
 	}
 </script>
@@ -142,14 +162,14 @@
 <div class="mx-auto flex min-h-dvh max-w-lg flex-col bg-bg text-text">
 	<!-- Header -->
 	<header
-		class="sticky top-0 z-10 flex items-center gap-2 border-b border-black/5 bg-surface px-3 py-3 shadow-sm dark:border-white/10"
+		class="panel sticky top-0 z-10 flex items-center gap-2 rounded-none border-x-0 border-t-0 px-3 py-3"
 	>
 		<a
 			href={resolve('/')}
 			aria-label="Zurück"
-			class="grid min-h-9 min-w-9 place-items-center rounded-full bg-black/5 text-xl hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15"
+			class="grid size-11 place-items-center rounded-full bg-black/5 transition-all duration-200 ease-out hover:bg-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:bg-white/10 dark:hover:bg-white/15"
 		>
-			‹
+			<ChevronLeft size={22} aria-hidden="true" />
 		</a>
 		<h1 class="text-lg font-bold tracking-tight">Einstellungen</h1>
 	</header>
@@ -161,22 +181,13 @@
 			<div class="space-y-4 rounded-2xl border border-black/5 bg-surface p-4 dark:border-white/10">
 				<div>
 					<span class="mb-2 block text-sm font-medium">Modus</span>
-					<div class="grid grid-cols-3 gap-2">
-						{#each THEMES as t (t.id)}
-							<button
-								type="button"
-								onclick={() => settings.patch({ theme: t.id })}
-								aria-pressed={$settings.theme === t.id}
-								class="flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-xs transition-colors {$settings.theme ===
-								t.id
-									? 'border-transparent bg-black/5 font-semibold text-accent dark:bg-white/10'
-									: 'border-black/10 opacity-70 dark:border-white/10'}"
-							>
-								<span class="text-lg" aria-hidden="true">{t.icon}</span>
-								{t.label}
-							</button>
-						{/each}
-					</div>
+					<Segmented
+						label="Modus"
+						stacked
+						value={$settings.theme}
+						onSelect={(v) => settings.patch({ theme: v as ThemeSetting })}
+						options={THEMES.map((t) => ({ value: t.id, label: t.label, icon: t.icon }))}
+					/>
 				</div>
 
 				<div>
@@ -217,59 +228,38 @@
 			<div class="space-y-4 rounded-2xl border border-black/5 bg-surface p-4 dark:border-white/10">
 				<div>
 					<span class="mb-2 block text-sm font-medium">Standardansicht</span>
-					<div class="grid grid-cols-3 gap-2">
-						{#each VIEWS as v (v.id)}
-							<button
-								type="button"
-								onclick={() => settings.patch({ defaultView: v.id })}
-								aria-pressed={$settings.defaultView === v.id}
-								class="rounded-xl border px-2 py-2 text-sm transition-colors {$settings.defaultView ===
-								v.id
-									? 'border-transparent bg-black/5 font-semibold text-accent dark:bg-white/10'
-									: 'border-black/10 opacity-70 dark:border-white/10'}"
-							>
-								{v.label}
-							</button>
-						{/each}
-					</div>
+					<Segmented
+						label="Standardansicht"
+						value={$settings.defaultView}
+						onSelect={(v) => settings.patch({ defaultView: v as CalendarViewId })}
+						options={VIEWS.map((v) => ({ value: v.id, label: v.label }))}
+					/>
 				</div>
 
 				<div>
 					<span class="mb-2 block text-sm font-medium">Wochenstart</span>
-					<div class="grid grid-cols-2 gap-2">
-						{#each [{ v: 1, l: 'Montag' }, { v: 0, l: 'Sonntag' }] as opt (opt.v)}
-							<button
-								type="button"
-								onclick={() => settings.patch({ weekStartsOn: opt.v as 0 | 1 })}
-								aria-pressed={$settings.weekStartsOn === opt.v}
-								class="rounded-xl border px-2 py-2 text-sm transition-colors {$settings.weekStartsOn ===
-								opt.v
-									? 'border-transparent bg-black/5 font-semibold text-accent dark:bg-white/10'
-									: 'border-black/10 opacity-70 dark:border-white/10'}"
-							>
-								{opt.l}
-							</button>
-						{/each}
-					</div>
+					<Segmented
+						label="Wochenstart"
+						value={String($settings.weekStartsOn)}
+						onSelect={(v) => settings.patch({ weekStartsOn: Number(v) as 0 | 1 })}
+						options={[
+							{ value: '1', label: 'Montag' },
+							{ value: '0', label: 'Sonntag' }
+						]}
+					/>
 				</div>
 
 				<div>
 					<span class="mb-2 block text-sm font-medium">Zeitformat</span>
-					<div class="grid grid-cols-2 gap-2">
-						{#each [{ v: '24h', l: '24 Stunden' }, { v: '12h', l: '12 Stunden' }] as opt (opt.v)}
-							<button
-								type="button"
-								onclick={() => settings.patch({ timeFormat: opt.v as '12h' | '24h' })}
-								aria-pressed={$settings.timeFormat === opt.v}
-								class="rounded-xl border px-2 py-2 text-sm transition-colors {$settings.timeFormat ===
-								opt.v
-									? 'border-transparent bg-black/5 font-semibold text-accent dark:bg-white/10'
-									: 'border-black/10 opacity-70 dark:border-white/10'}"
-							>
-								{opt.l}
-							</button>
-						{/each}
-					</div>
+					<Segmented
+						label="Zeitformat"
+						value={$settings.timeFormat}
+						onSelect={(v) => settings.patch({ timeFormat: v as '12h' | '24h' })}
+						options={[
+							{ value: '24h', label: '24 Stunden' },
+							{ value: '12h', label: '12 Stunden' }
+						]}
+					/>
 				</div>
 			</div>
 		</section>
@@ -295,7 +285,14 @@
 						♻️ Wiederherstellen
 					</button>
 				</div>
-				{#if status}
+				{#if busy}
+					<div class="space-y-2" aria-live="polite" aria-busy="true">
+						<p class="text-sm opacity-70">{busy}</p>
+						<div class="skeleton h-4 w-3/4"></div>
+						<div class="skeleton h-4 w-1/2"></div>
+						<div class="skeleton h-4 w-2/3"></div>
+					</div>
+				{:else if status}
 					<p
 						class="rounded-lg px-3 py-2 text-sm {status.kind === 'ok'
 							? 'bg-feli/15 text-feli'

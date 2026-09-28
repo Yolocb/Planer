@@ -1,7 +1,19 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, type Component } from 'svelte';
 	import { get } from 'svelte/store';
+	import { fade } from 'svelte/transition';
 	import { resolve } from '$app/paths';
+	import {
+		Settings,
+		ListChecks,
+		ChevronLeft,
+		ChevronRight,
+		CalendarRange,
+		CalendarDays,
+		ListTodo,
+		LocateFixed,
+		Plus
+	} from '@lucide/svelte';
 	import CalendarView from '$lib/components/CalendarView.svelte';
 	import type { FcViewId } from '$lib/components/CalendarView.svelte';
 	import PersonLegend from '$lib/components/PersonLegend.svelte';
@@ -40,10 +52,10 @@
 		agenda: 'listWeek'
 	};
 
-	const NAV_ITEMS: { id: CalendarViewId; label: string; icon: string }[] = [
-		{ id: 'week', label: 'Woche', icon: '🗓️' },
-		{ id: 'month', label: 'Monat', icon: '📆' },
-		{ id: 'agenda', label: 'Agenda', icon: '📋' }
+	const NAV_ITEMS: { id: CalendarViewId; label: string; icon: Component }[] = [
+		{ id: 'week', label: 'Woche', icon: CalendarRange },
+		{ id: 'month', label: 'Monat', icon: CalendarDays },
+		{ id: 'agenda', label: 'Agenda', icon: ListTodo }
 	];
 
 	let currentTab = $state<CalendarViewId>(get(settings).defaultView);
@@ -232,7 +244,7 @@
 
 <div class="flex h-dvh flex-col bg-bg text-text">
 	<!-- Header: title + date-range navigation -->
-	<header class="border-b border-black/5 bg-surface shadow-sm dark:border-white/10">
+	<header class="panel sticky top-0 z-10 rounded-none border-x-0 border-t-0">
 		<div class="flex items-center justify-between px-4 pt-3">
 			<h1 class="text-lg font-bold tracking-tight">
 				<span class="text-christian">Family</span><span class="text-family">Cal</span>
@@ -242,16 +254,16 @@
 				<button
 					type="button"
 					onclick={openChores}
-					class="flex min-h-9 items-center gap-1.5 rounded-full bg-black/5 px-3 text-sm font-medium hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15"
+					class="flex min-h-11 items-center gap-1.5 rounded-full bg-black/5 px-3.5 text-sm font-medium transition-all duration-200 ease-out hover:bg-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:bg-white/10 dark:hover:bg-white/15"
 				>
-					<span aria-hidden="true">✅</span> Aufgaben
+					<ListChecks size={17} aria-hidden="true" /> Aufgaben
 				</button>
 				<a
 					href={resolve('/settings')}
 					aria-label="Einstellungen"
-					class="grid min-h-9 min-w-9 place-items-center rounded-full bg-black/5 text-base hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15"
+					class="grid min-h-11 min-w-11 place-items-center rounded-full bg-black/5 transition-all duration-200 ease-out hover:bg-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:bg-white/10 dark:hover:bg-white/15"
 				>
-					<span aria-hidden="true">⚙️</span>
+					<Settings size={19} aria-hidden="true" />
 				</a>
 			</div>
 		</div>
@@ -261,18 +273,18 @@
 					type="button"
 					aria-label="Vorheriger Zeitraum"
 					onclick={() => calApi?.prev()}
-					class="grid size-10 place-items-center rounded-full text-xl hover:bg-black/5 dark:hover:bg-white/10"
+					class="grid size-11 place-items-center rounded-full transition-all duration-200 ease-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:hover:bg-white/10"
 				>
-					‹
+					<ChevronLeft size={22} aria-hidden="true" />
 				</button>
 				<span class="text-sm font-semibold">{rangeTitle}</span>
 				<button
 					type="button"
 					aria-label="Nächster Zeitraum"
 					onclick={() => calApi?.next()}
-					class="grid size-10 place-items-center rounded-full text-xl hover:bg-black/5 dark:hover:bg-white/10"
+					class="grid size-11 place-items-center rounded-full transition-all duration-200 ease-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:hover:bg-white/10"
 				>
-					›
+					<ChevronRight size={22} aria-hidden="true" />
 				</button>
 			</div>
 		{/if}
@@ -290,22 +302,30 @@
 		ontouchend={kidMode ? undefined : onTouchEnd}
 	>
 		{#if kidMode}
-			<KidView />
+			<div class="h-full" in:fade={{ duration: 150 }}>
+				<KidView />
+			</div>
 		{:else}
 			{#if !$eventsLoaded}
-				<div class="grid h-full place-items-center text-sm opacity-60">Lade Termine…</div>
+				<div class="absolute inset-2 z-10 flex flex-col gap-2" aria-hidden="true">
+					<div class="skeleton h-9 w-full"></div>
+					<div class="skeleton h-6 w-2/3"></div>
+					<div class="skeleton flex-1 w-full"></div>
+				</div>
 			{/if}
-			<CalendarView
-				view={fcView}
-				events={$filteredEvents}
-				weekStartsOn={$settings.weekStartsOn}
-				timeFormat={$settings.timeFormat}
-				onEventClick={handleEventClick}
-				onSlotSelect={handleSlotSelect}
-				onEventDrop={handleEventDrop}
-				onRangeChange={(t) => (rangeTitle = t)}
-				bind:api={calApi}
-			/>
+			<div class="h-full" in:fade={{ duration: 150 }}>
+				<CalendarView
+					view={fcView}
+					events={$filteredEvents}
+					weekStartsOn={$settings.weekStartsOn}
+					timeFormat={$settings.timeFormat}
+					onEventClick={handleEventClick}
+					onSlotSelect={handleSlotSelect}
+					onEventDrop={handleEventDrop}
+					onRangeChange={(t) => (rangeTitle = t)}
+					bind:api={calApi}
+				/>
+			</div>
 		{/if}
 	</main>
 
@@ -315,39 +335,48 @@
 			type="button"
 			onclick={openAddEvent}
 			aria-label="Termin hinzufügen"
-			class="fixed bottom-20 right-4 z-20 grid size-14 place-items-center rounded-full text-3xl text-white transition-transform active:scale-95"
+			class="fixed bottom-20 right-4 z-20 grid size-14 place-items-center rounded-full text-white transition-transform duration-200 ease-out active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
 			style="background-color: var(--color-accent); background-image: var(--accent-gradient); box-shadow: 0 10px 24px -6px color-mix(in srgb, var(--color-accent) 70%, transparent)"
 		>
-			+
+			<Plus size={28} aria-hidden="true" />
 		</button>
 	{/if}
 
 	<!-- Bottom navigation -->
 	<nav
-		class="flex items-stretch justify-around border-t border-black/5 bg-surface pb-[env(safe-area-inset-bottom)] dark:border-white/10"
+		class="panel flex items-stretch justify-around rounded-none border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)]"
 	>
 		<button
 			type="button"
 			onclick={goToday}
-			class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs opacity-60"
+			class="flex min-h-14 flex-1 flex-col items-center justify-center gap-1 py-2 text-xs opacity-60 transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
 		>
-			<span class="text-lg" aria-hidden="true">📍</span>
+			<span class="grid size-8 place-items-center rounded-full">
+				<LocateFixed size={20} aria-hidden="true" />
+			</span>
 			Heute
 		</button>
 		{#each NAV_ITEMS as item (item.id)}
+			{@const active = !kidMode && currentTab === item.id}
 			<button
 				type="button"
 				onclick={() => {
 					currentTab = item.id;
 					kidMode = false;
 				}}
-				aria-current={!kidMode && currentTab === item.id ? 'page' : undefined}
-				class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs {!kidMode &&
-				currentTab === item.id
+				aria-current={active ? 'page' : undefined}
+				class="flex min-h-14 flex-1 flex-col items-center justify-center gap-1 py-2 text-xs transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset {active
 					? 'font-semibold text-accent'
 					: 'opacity-60'}"
 			>
-				<span class="text-lg" aria-hidden="true">{item.icon}</span>
+				<span
+					class="grid size-8 place-items-center rounded-full transition-all duration-200 ease-out"
+					style={active
+						? 'background-color: color-mix(in srgb, var(--color-accent) 15%, transparent)'
+						: ''}
+				>
+					<item.icon size={20} aria-hidden="true" />
+				</span>
 				{item.label}
 			</button>
 		{/each}
@@ -355,11 +384,17 @@
 			type="button"
 			onclick={() => (kidMode = true)}
 			aria-current={kidMode ? 'page' : undefined}
-			class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs {kidMode
+			class="flex min-h-14 flex-1 flex-col items-center justify-center gap-1 py-2 text-xs transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-feli focus-visible:ring-inset {kidMode
 				? 'font-semibold text-feli'
 				: 'opacity-60'}"
 		>
-			<span class="text-lg" aria-hidden="true">⭐</span>
+			<span
+				class="grid size-8 place-items-center rounded-full text-lg transition-all duration-200 ease-out"
+				style={kidMode
+					? 'background-color: color-mix(in srgb, var(--color-feli) 18%, transparent)'
+					: ''}
+				aria-hidden="true">⭐</span
+			>
 			Feli
 		</button>
 	</nav>

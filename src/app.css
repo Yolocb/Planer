@@ -94,6 +94,18 @@
 		--fc-bg: var(--color-bg);
 		--fc-surface: var(--color-surface);
 		--fc-text: var(--color-text);
+
+		/* Depth + separation tokens. Hairline follows the palette text colour so
+		   it reads correctly on light AND dark surfaces (lazy var substitution
+		   resolves them in each element's palette context). Shadows are black-
+		   based (overridden for dark mode below). */
+		--hairline: color-mix(in srgb, var(--color-text) 12%, transparent);
+		--shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px -14px rgba(0, 0, 0, 0.2);
+		--shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.06), 0 16px 34px -14px rgba(0, 0, 0, 0.28);
+	}
+	.dark {
+		--shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 28px -14px rgba(0, 0, 0, 0.6);
+		--shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.45), 0 18px 38px -14px rgba(0, 0, 0, 0.7);
 	}
 
 	html,
@@ -124,8 +136,30 @@
 /* / danger actions across the modal, detail sheet and dialogs.        */
 /* ------------------------------------------------------------------ */
 @layer components {
+	/* Frosted, elevated surface — header, bottom nav, floating cards. */
+	.panel {
+		@apply border backdrop-blur-md;
+		background-color: color-mix(in srgb, var(--color-surface) 78%, transparent);
+		border-color: var(--hairline);
+		box-shadow: var(--shadow-card);
+	}
+	/* Cards that respond to hover (soft lift). */
+	.panel-interactive {
+		@apply rounded-2xl border backdrop-blur-md transition-all duration-200 ease-out;
+		background-color: color-mix(in srgb, var(--color-surface) 78%, transparent);
+		border-color: var(--hairline);
+		box-shadow: var(--shadow-card);
+	}
+	.panel-interactive:hover {
+		box-shadow: var(--shadow-card-hover);
+	}
+	/* Pulsing placeholder for loading / parsing states. */
+	.skeleton {
+		@apply animate-pulse rounded-xl bg-black/5 dark:bg-white/10;
+	}
+
 	.btn {
-		@apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2;
+		@apply inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2;
 	}
 	/* Larger, high-emphasis variant for the primary form action. */
 	.btn-lg {
