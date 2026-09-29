@@ -68,6 +68,51 @@ export function eventsToIcs(list: CalendarEvent[]): string {
 	return value;
 }
 
+/**
+ * Serialise a single event (or one occurrence of a recurring series) to a
+ * one-event .ics document suitable for "Add to Calendar".
+ *
+ * - Regular / master event  → exported with its RRULE so the whole series is
+ *   imported into the target calendar app.
+ * - Virtual occurrence (id contains "::") → exported as a standalone one-time
+ *   VEVENT using the occurrence's expanded start/end, with no RRULE.  The
+ *   `master` param supplies title, category etc. when only the occurrence is
+ *   available; if omitted, `event` itself is used for those fields.
+ */
+export function eventToIcs(event: CalendarEvent, master?: CalendarEvent | null): string {
+	const isOccurrence = event.id.includes('::');
+	let attrs: EventAttributes;
+
+	if (isOccurrence) {
+		// Build a one-time VEVENT from the occurrence's own start/end but inherit
+		// metadata (title, location, category, description) from the master.
+		const source = master ?? event;
+		attrs = {
+			uid: event.id, // unique per occurrence
+			title: source.title,
+			start: isoToArray(event.start, event.allDay),
+			end: isoToArray(event.end, event.allDay),
+			startInputType: 'local',
+			endInputType: 'local',
+			startOutputType: 'local',
+			endOutputType: 'local'
+		};
+		if (source.description) attrs.description = source.description;
+		if (source.location) attrs.location = source.location;
+		if (source.category) {
+			const cat = CATEGORIES.find((c) => c.id === source.category);
+			if (cat) attrs.categories = [cat.label];
+		}
+		// Intentionally no recurrenceRule — the user is adding only this date.
+	} else {
+		attrs = toAttributes(event);
+	}
+
+	const { error, value } = createEvents([attrs]);
+	if (error || !value) throw error ?? new Error('Konnte iCal nicht erzeugen.');
+	return value;
+}
+
 // ---- Import -------------------------------------------------------------
 
 /** ICAL.Recur -> RecurrenceRule (best effort; unsupported parts dropped). */

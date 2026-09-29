@@ -18,6 +18,31 @@ export function downloadText(filename: string, mimeType: string, text: string): 
 }
 
 /**
+ * Share or download a text file.
+ *
+ * On browsers that support the Web Share API with file sharing (iOS Safari,
+ * Android Chrome) this opens the native share sheet so the user can pick
+ * their calendar app directly. On desktop / unsupported browsers it falls
+ * back to a plain file download.
+ */
+export async function shareOrDownload(
+	filename: string,
+	mimeType: string,
+	text: string
+): Promise<void> {
+	const file = new File([text], filename, { type: `${mimeType};charset=utf-8` });
+	if (
+		typeof navigator.share === 'function' &&
+		typeof navigator.canShare === 'function' &&
+		navigator.canShare({ files: [file] })
+	) {
+		await navigator.share({ files: [file], title: filename });
+	} else {
+		downloadText(filename, mimeType, text);
+	}
+}
+
+/**
  * Prompt the user to pick a local text file and resolve its contents.
  * Resolves `null` if the picker is dismissed without a selection.
  */

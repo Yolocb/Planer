@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
+	import { CalendarPlus } from '@lucide/svelte';
 	import { PERSON_BY_ID } from '$lib/constants/persons';
 	import { getCategoryMeta } from '$lib/constants/categories';
 	import { getContrastText, getEventDisplayColor, isGradient } from '$lib/utils/colors';
 	import { formatEventRange } from '$lib/utils/datetime';
 	import { describeRecurrence } from '$lib/utils/recurrence';
 	import { trapFocus } from '$lib/actions/focusTrap';
+	import { eventToIcs } from '$lib/utils/ical';
+	import { shareOrDownload } from '$lib/utils/file';
 	import type { CalendarEvent, EventOwnerId, ReminderMinutes } from '$lib/types';
 
 	interface Props {
@@ -43,6 +46,22 @@
 	);
 	const isRecurring = $derived(!!(event?.recurringEventId || event?.recurrence));
 	const rule = $derived(master?.recurrence ?? event?.recurrence);
+
+	async function addToCalendar() {
+		if (!event) return;
+		try {
+			const ics = eventToIcs(event, master);
+			const slug =
+				event.title
+					.trim()
+					.replace(/\s+/g, '-')
+					.replace(/[^a-z0-9-]/gi, '')
+					.slice(0, 40) || 'termin';
+			await shareOrDownload(`${slug}.ics`, 'text/calendar', ics);
+		} catch (err) {
+			console.error('Kalender-Export fehlgeschlagen:', err);
+		}
+	}
 </script>
 
 {#if open && event}
@@ -139,6 +158,15 @@
 			<!-- Actions -->
 			<div class="flex gap-2 border-t border-black/5 px-5 py-3 dark:border-white/10">
 				<button type="button" class="btn btn-primary flex-1" onclick={onEdit}> Bearbeiten </button>
+				<button
+					type="button"
+					class="btn btn-secondary flex shrink-0 items-center justify-center gap-1.5"
+					aria-label="Zum Kalender hinzufügen"
+					title="Zum Kalender hinzufügen"
+					onclick={addToCalendar}
+				>
+					<CalendarPlus size={16} aria-hidden="true" />
+				</button>
 				<button type="button" class="btn btn-danger flex-1" onclick={onDelete}> Löschen </button>
 			</div>
 		</div>
