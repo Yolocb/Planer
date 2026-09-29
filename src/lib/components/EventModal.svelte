@@ -74,6 +74,89 @@
 	let count = $state(10);
 	let error = $state('');
 
+	// --- @-mention state ---
+	// When the user types "@" in the title or notes field, a filtered dropdown
+	// of family members appears. Selecting one appends their full name and adds
+	// them to personIds. The dropdown uses position:fixed (computed from the
+	// input's bounding rect) so it escapes the overflow-y-auto scroll container.
+	let titleInputEl = $state<HTMLInputElement | null>(null);
+	let notesInputEl = $state<HTMLTextAreaElement | null>(null);
+	let mentionQuery = $state<string | null>(null);
+	let mentionAnchor = $state<'title' | 'notes' | null>(null);
+	let mentionIdx = $state(0);
+	let mentionStyle = $state('');
+
+	const mentionResults = $derived(
+		mentionQuery !== null
+			? PERSONS.filter((p) => p.name.toLowerCase().startsWith(mentionQuery!.toLowerCase()))
+			: []
+	);
+	// Clamp highlight index whenever the result set changes.
+	const safeMentionIdx = $derived(
+		mentionResults.length ? Math.min(mentionIdx, mentionResults.length - 1) : 0
+	);
+
+	function detectMention(el: HTMLInputElement | HTMLTextAreaElement, anchor: 'title' | 'notes') {
+		const pos = el.selectionStart ?? el.value.length;
+		const before = el.value.slice(0, pos);
+		const match = before.match(/@(\w*)$/);
+		if (match) {
+			// Reset highlight when anchor or query prefix changes.
+			if (mentionAnchor !== anchor || mentionQuery !== match[1]) mentionIdx = 0;
+			mentionQuery = match[1];
+			mentionAnchor = anchor;
+			// Position the fixed dropdown below (or above) the input.
+			const rect = el.getBoundingClientRect();
+			const spaceBelow = window.innerHeight - rect.bottom;
+			if (spaceBelow >= 120) {
+				mentionStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;width:${rect.width}px`;
+			} else {
+				mentionStyle = `bottom:${window.innerHeight - rect.top + 4}px;left:${rect.left}px;width:${rect.width}px`;
+			}
+		} else if (mentionAnchor === anchor) {
+			mentionQuery = null;
+			mentionAnchor = null;
+		}
+	}
+
+	function closeMention() {
+		mentionQuery = null;
+		mentionAnchor = null;
+		mentionIdx = 0;
+	}
+
+	function applyMention(person: (typeof PERSONS)[number]) {
+		const el = mentionAnchor === 'title' ? titleInputEl : notesInputEl;
+		if (!el) return;
+		const pos = el.selectionStart ?? el.value.length;
+		const newBefore = el.value.slice(0, pos).replace(/@\w*$/, `@${person.name}`);
+		const after = el.value.slice(pos);
+		if (mentionAnchor === 'title') title = newBefore + after;
+		else notes = newBefore + after;
+		if (!personIds.includes(person.id)) personIds = [...personIds, person.id];
+		closeMention();
+		// Restore focus after Svelte updates the DOM with the new value.
+		setTimeout(() => el.focus(), 0);
+	}
+
+	function handleMentionKey(e: KeyboardEvent) {
+		if (!mentionResults.length) return;
+		if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			mentionIdx = (safeMentionIdx + 1) % mentionResults.length;
+		} else if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			mentionIdx = (safeMentionIdx - 1 + mentionResults.length) % mentionResults.length;
+		} else if (e.key === 'Enter') {
+			e.preventDefault();
+			e.stopPropagation(); // don't trigger form save
+			applyMention(mentionResults[safeMentionIdx]);
+		} else if (e.key === 'Escape') {
+			e.stopPropagation(); // don't close the modal
+			closeMention();
+		}
+	}
+
 	const isEditing = $derived(!!event);
 
 	// Hydrate the form once each time the modal opens.
@@ -85,6 +168,7 @@
 
 	function hydrate() {
 		error = '';
+		closeMention();
 		if (event) {
 			title = event.title;
 			personIds = [...event.personIds];
@@ -234,16 +318,27 @@
 				</p>
 			{/if}
 
-			<!-- Title -->
+			<!-- Title (supports @-mention) -->
 			<div>
 				<label for="ev-title" class="mb-1 block text-xs font-medium opacity-60">Titel</label>
 				<input
 					id="ev-title"
 					type="text"
+					role="combobox"
 					bind:value={title}
+					bind:this={titleInputEl}
 					maxlength="100"
 					placeholder="z. B. Zahnarzttermin"
+					aria-expanded={mentionAnchor === 'title' && mentionResults.length > 0}
+					aria-autocomplete="list"
+					aria-controls={mentionAnchor === 'title' ? 'mention-list' : undefined}
 					class="w-full rounded-xl border border-black/10 bg-surface px-3 py-2.5 text-base outline-none focus:border-christian dark:border-white/15"
+					oninput={(e) => detectMention(e.currentTarget, 'title')}
+					onkeydown={handleMentionKey}
+					onblur={() =>
+						setTimeout(() => {
+							if (mentionAnchor === 'title') closeMention();
+						}, 200)}
 				/>
 			</div>
 
@@ -457,18 +552,64 @@
 				</select>
 			</div>
 
-			<!-- Notes -->
+			<!-- Notes (supports @-mention) -->
 			<div>
 				<label for="ev-notes" class="mb-1 block text-xs font-medium opacity-60">Notizen</label>
 				<textarea
 					id="ev-notes"
+					role="combobox"
 					bind:value={notes}
+					bind:this={notesInputEl}
 					rows="3"
 					placeholder="Optional"
+					aria-expanded={mentionAnchor === 'notes' && mentionResults.length > 0}
+					aria-autocomplete="list"
+					aria-controls={mentionAnchor === 'notes' ? 'mention-list' : undefined}
 					class="w-full resize-none rounded-xl border border-black/10 bg-surface px-3 py-2.5 dark:border-white/15"
-				></textarea>
+					oninput={(e) => detectMention(e.currentTarget, 'notes')}
+					onkeydown={handleMentionKey}
+					onblur={() =>
+						setTimeout(() => {
+							if (mentionAnchor === 'notes') closeMention();
+						}, 200)}></textarea>
 			</div>
 		</div>
+
+		<!-- @-mention dropdown — rendered outside the scroll container so it is
+		     never clipped by overflow-y-auto. Uses position:fixed computed from
+		     the active input's bounding rect. -->
+		{#if mentionQuery !== null && mentionResults.length > 0}
+			<ul
+				id="mention-list"
+				role="listbox"
+				aria-label="Personen"
+				class="fixed z-[60] overflow-hidden rounded-xl border border-black/10 bg-surface shadow-lg dark:border-white/15"
+				style={mentionStyle}
+			>
+				{#each mentionResults as person, i (person.id)}
+					<li role="option" aria-selected={i === safeMentionIdx}>
+						<button
+							type="button"
+							class="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition-colors {i ===
+							safeMentionIdx
+								? 'bg-black/5 dark:bg-white/10'
+								: ''}"
+							onmousedown={(e) => {
+								e.preventDefault();
+								applyMention(person);
+							}}
+						>
+							<span class="size-2.5 shrink-0 rounded-full" style="background-color: {person.color};"
+							></span>
+							<span class="flex-1 text-left">{person.name}</span>
+							{#if personIds.includes(person.id)}
+								<span class="text-xs opacity-40" aria-label="bereits ausgewählt">✓</span>
+							{/if}
+						</button>
+					</li>
+				{/each}
+			</ul>
+		{/if}
 
 		<!-- Prominent, always-visible action bar (Save is the dominant element) -->
 		<footer
