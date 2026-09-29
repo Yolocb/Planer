@@ -4,6 +4,11 @@
 	import { ChevronLeft } from '@lucide/svelte';
 	import { settings } from '$lib/stores/settings';
 	import { loadEvents, importEvents } from '$lib/stores/events';
+	import {
+		requestReminderPermission,
+		startReminderService,
+		stopReminderService
+	} from '$lib/stores/reminderService';
 	import { loadChores } from '$lib/stores/chores';
 	import { getEvents, getChores, clearAllData, replaceAllData } from '$lib/stores/db';
 	import { downloadText, pickTextFile } from '$lib/utils/file';
@@ -69,7 +74,34 @@
 		// Populate the in-memory stores so a later "back" shows fresh data.
 		loadEvents();
 		loadChores();
+		if (typeof Notification !== 'undefined') notifPermission = Notification.permission;
 	});
+
+	/** Current browser notification permission, for the reminders hint. */
+	let notifPermission = $state<'default' | 'granted' | 'denied'>('default');
+
+	/** Toggle event reminders, requesting notification permission when enabling. */
+	async function setReminders(on: boolean) {
+		if (!on) {
+			settings.patch({ remindersEnabled: false });
+			stopReminderService();
+			return;
+		}
+		if (typeof Notification === 'undefined') {
+			flash('error', 'Dieses Gerät unterstützt keine Benachrichtigungen.');
+			return;
+		}
+		const perm = await requestReminderPermission();
+		notifPermission = perm;
+		if (perm === 'granted') {
+			settings.patch({ remindersEnabled: true });
+			startReminderService();
+			flash('ok', 'Erinnerungen aktiviert.');
+		} else {
+			settings.patch({ remindersEnabled: false });
+			flash('error', 'Benachrichtigungen sind blockiert. Bitte im Browser erlauben.');
+		}
+	}
 
 	async function exportIcs() {
 		try {
@@ -269,6 +301,35 @@
 						]}
 					/>
 				</div>
+			</div>
+		</section>
+
+		<!-- Erinnerungen -->
+		<section class="space-y-3">
+			<h2 class="px-1 text-xs font-semibold uppercase tracking-wide opacity-60">Erinnerungen</h2>
+			<div class="space-y-3 rounded-2xl border border-black/5 bg-surface p-4 dark:border-white/10">
+				<div>
+					<span class="mb-2 block text-sm font-medium">Termin-Erinnerungen</span>
+					<Segmented
+						label="Termin-Erinnerungen"
+						value={$settings.remindersEnabled ? 'on' : 'off'}
+						onSelect={(v) => setReminders(v === 'on')}
+						options={[
+							{ value: 'on', label: 'An' },
+							{ value: 'off', label: 'Aus' }
+						]}
+					/>
+				</div>
+				{#if notifPermission === 'denied'}
+					<p class="rounded-lg bg-janina/15 px-3 py-2 text-sm text-janina">
+						Benachrichtigungen sind im Browser blockiert — bitte in den Website-Einstellungen
+						erlauben.
+					</p>
+				{:else}
+					<p class="text-xs opacity-60">
+						Erinnerungen erscheinen nur, solange FamilyCal in einem Tab geöffnet ist.
+					</p>
+				{/if}
 			</div>
 		</section>
 

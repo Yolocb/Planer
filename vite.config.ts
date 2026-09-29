@@ -19,6 +19,10 @@ const analyzePlugins = process.env.ANALYZE
 	: [];
 
 export default defineConfig({
+	// Expose the base path to the service worker, which cannot import $app/paths.
+	define: {
+		__PWA_BASE__: JSON.stringify(`${base}/`)
+	},
 	plugins: [
 		tailwindcss(),
 		sveltekit({
@@ -32,12 +36,21 @@ export default defineConfig({
 			// copies it to index.html so the root URL resolves with a 200.
 			adapter: adapter({ fallback: '404.html', strict: false }),
 			paths: { base },
+			// SvelteKit compiles src/service-worker.ts but must NOT auto-register it:
+			// @vite-pwa/sveltekit owns registration (virtual:pwa-register in +layout).
+			// Leaving both on double-registers and, in dev, evaluates the un-injected
+			// SW (self.__WB_MANIFEST undefined) → "script evaluation failed".
+			serviceWorker: { register: false },
 			// SPA: don't try to crawl/prerender routes at build time.
 			prerender: { entries: [] }
 		}),
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
-			strategies: 'generateSW',
+			strategies: 'injectManifest',
+			// SvelteKit compiles its native SW source (src/service-worker.ts) to
+			// service-worker.js; the plugin injects the precache manifest there.
+			// We register manually via virtual:pwa-register in +layout.svelte.
+			injectRegister: false,
 			scope: `${base}/`,
 			base: `${base}/`,
 			manifest: {
@@ -77,12 +90,10 @@ export default defineConfig({
 					}
 				]
 			},
-			workbox: {
-				globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,ico,woff2}'],
-				// SPA offline routing: unmatched navigations fall back to the cached
-				// app-shell entry (adapter-static emits 404.html; the deploy also
-				// copies it to index.html for the root 200).
-				navigateFallback: `${base}/`
+			injectManifest: {
+				globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,ico,woff2}']
+				// SPA offline routing (navigateFallback) is handled by hand in
+				// src/service-worker.ts — injectManifest has no navigateFallback option.
 			},
 			devOptions: {
 				enabled: false
@@ -103,6 +114,9 @@ export default defineConfig({
 	},
 	test: {
 		environment: 'jsdom',
+		// The default 'forks' pool fails to spawn workers on Windows paths with
+		// spaces ("Claude Projects"); threads is reliable here.
+		pool: 'threads',
 		include: ['tests/unit/**/*.{test,spec}.ts', 'tests/integration/**/*.{test,spec}.ts'],
 		globals: true
 	}

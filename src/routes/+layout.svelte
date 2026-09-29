@@ -21,11 +21,17 @@
 		document.documentElement.dataset.palette = $settings.palette;
 	});
 
-	// Register the service worker (registerType: 'autoUpdate') once in the browser.
+	// Register the service worker (registerType: 'autoUpdate') once in the browser,
+	// then start the local reminder service (guarded internally by the setting +
+	// notification permission).
 	onMount(async () => {
-		if (!pwaInfo) return;
-		const { registerSW } = await import('virtual:pwa-register');
-		registerSW({ immediate: true });
+		if (!browser) return;
+		if (pwaInfo) {
+			const { registerSW } = await import('virtual:pwa-register');
+			registerSW({ immediate: true });
+		}
+		const { startReminderService } = await import('$lib/stores/reminderService');
+		startReminderService();
 	});
 </script>
 

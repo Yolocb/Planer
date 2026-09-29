@@ -11,7 +11,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	weekStartsOn: 1,
 	timeFormat: '24h',
 	theme: 'auto',
-	palette: 'modern'
+	palette: 'modern',
+	remindersEnabled: false
 };
 
 function load(): AppSettings {

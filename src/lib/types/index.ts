@@ -90,5 +90,7 @@ export interface AppSettings {
 	theme: ThemeSetting;
 	/** Active colour palette. */
 	palette: PaletteSetting;
+	/** Show browser notifications ahead of events with a reminder set. */
+	remindersEnabled: boolean;
 	lastVisitedDate?: string;
 }

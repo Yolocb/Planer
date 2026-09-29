@@ -32,8 +32,10 @@
 		onRangeChange?: (title: string) => void;
 		/** Persist a drag/resize of a non-recurring event (ISO start/end). */
 		onEventDrop?: (id: string, start: string, end: string, allDay: boolean) => void;
-		/** Bindable imperative controls (today / prev / next). */
-		api?: { today: () => void; prev: () => void; next: () => void } | undefined;
+		/** Bindable imperative controls (today / prev / next / go to a date). */
+		api?:
+			| { today: () => void; prev: () => void; next: () => void; gotoDate: (d: Date) => void }
+			| undefined;
 	}
 
 	let {
@@ -188,7 +190,8 @@
 		api = {
 			today: () => calendar?.today(),
 			prev: () => calendar?.prev(),
-			next: () => calendar?.next()
+			next: () => calendar?.next(),
+			gotoDate: (d: Date) => calendar?.gotoDate(d)
 		};
 		return () => calendar?.destroy();
 	});

@@ -2,6 +2,7 @@
 	import { onMount, type Component } from 'svelte';
 	import { get } from 'svelte/store';
 	import { fade } from 'svelte/transition';
+	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
 	import {
 		Settings,
@@ -55,11 +56,32 @@
 	/** When true, the playful kid view replaces the calendar. */
 	let kidMode = $state(false);
 	let rangeTitle = $state('');
-	let calApi = $state<{ today: () => void; prev: () => void; next: () => void } | undefined>(
-		undefined
-	);
+	let calApi = $state<
+		| { today: () => void; prev: () => void; next: () => void; gotoDate: (d: Date) => void }
+		| undefined
+	>(undefined);
 
 	const fcView = $derived(VIEW_MAP[currentTab] ?? 'timeGridWeek');
+
+	// A reminder notification (opened via ?date=YYYY-MM-DD or a service-worker
+	// message) asks the calendar to jump to that day. The calendar loads async,
+	// so hold the request until its api binding is ready.
+	let pendingDate = $state<string | null>(null);
+
+	/** Parse a YYYY-MM-DD day as a local date (avoids the UTC off-by-one). */
+	function parseDay(day: string): Date | null {
+		const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+		if (!m) return null;
+		return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+	}
+
+	$effect(() => {
+		if (calApi && pendingDate) {
+			const d = parseDay(pendingDate);
+			pendingDate = null;
+			if (d) calApi.gotoDate(d);
+		}
+	});
 
 	// --- Lazy-loaded components: kept off the initial parse path. Each is loaded
 	// on first use and cached; onMount also prefetches them on idle so the first
@@ -308,6 +330,13 @@
 	onMount(() => {
 		loadEvents();
 		loadChores();
+		// Deep-link from a reminder notification: ?date=YYYY-MM-DD jumps to that day.
+		if (browser) {
+			const date = new URL(location.href).searchParams.get('date');
+			if (date) pendingDate = date;
+			// The service worker asks an already-open tab to navigate on click.
+			navigator.serviceWorker?.addEventListener('message', onSwMessage);
+		}
 		// Calendar is the default view — load it right away (skeleton covers the gap).
 		import('$lib/components/CalendarView.svelte').then((m) => (CalendarViewComp = m.default));
 		// Warm the on-demand chunks once the main thread is idle, so the first
@@ -324,7 +353,16 @@
 			.requestIdleCallback;
 		if (ric) ric(prefetch);
 		else setTimeout(prefetch, 1500);
+
+		return () => {
+			if (browser) navigator.serviceWorker?.removeEventListener('message', onSwMessage);
+		};
 	});
+
+	function onSwMessage(e: MessageEvent) {
+		const data = e.data as { type?: string; day?: string } | null;
+		if (data?.type === 'reminder-navigate' && data.day) pendingDate = data.day;
+	}
 </script>
 
 <svelte:window onkeydown={handleEscape} />
